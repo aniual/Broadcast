@@ -135,15 +135,53 @@
         "padding_bottom": 50
       }
     },
-    "section_divider_j77j3n": {
-      "type": "section-divider",
-      "disabled": true,
+    "section_rich_text_NRWata": {
+      "type": "section-rich-text",
+      "blocks": {
+        "heading_b6rqBB": {
+          "type": "heading",
+          "settings": {
+            "title": "Shop Jewelry by Category",
+            "heading_font_size": "heading-medium",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_m78Q4p": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Crafted with meaning. Worn with love. </p>",
+            "text_font_size": "body-small",
+            "padding_bottom": 16
+          }
+        },
+        "buttons_AVULzx": {
+          "type": "buttons",
+          "disabled": true,
+          "settings": {
+            "button_text": "Learn more",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "heading_b6rqBB",
+        "text_m78Q4p",
+        "buttons_AVULzx"
+      ],
+      "name": "Rich text",
       "settings": {
-        "show_line": true,
-        "width": "wrapper--full",
+        "align_text": "text-center",
+        "width": "wrapper--full-padded",
         "color_scheme": "",
-        "padding_top": 31,
-        "padding_bottom": 28
+        "overlay_type": "disabled",
+        "padding_top": 100,
+        "padding_bottom": 0
       }
     },
     "0c650933-1401-4b75-942d-30ebc9278656": {
@@ -192,9 +230,9 @@
         "h2 {font-size: 30px;}"
       ],
       "settings": {
-        "title": "Shop Jewelry by Category",
+        "title": "",
         "heading_font_size": "heading-mini",
-        "description": "<p>Crafted with meaning. Worn with love. </p>",
+        "description": "",
         "text_font_size": "body-small",
         "button_text": "",
         "button_url": "shopify://collections",
@@ -208,7 +246,7 @@
         "grid": 4,
         "layout_mobile": "2",
         "color_scheme": "",
-        "padding_top": 50,
+        "padding_top": 10,
         "padding_bottom": 25,
         "heading_tag": "automatic"
       }
@@ -1209,7 +1247,7 @@
     "578b026e-fe20-4995-8a78-d0fd8ce30467",
     "section_custom_content_ktDL7b",
     "section_divider_hwty7r",
-    "section_divider_j77j3n",
+    "section_rich_text_NRWata",
     "0c650933-1401-4b75-942d-30ebc9278656",
     "section_divider_yaqnKh",
     "section_double_slider_RLbxUJ",
