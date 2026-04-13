@@ -13,11 +13,16 @@
   assign header_color = settings.menu_transparent_color
   assign selected_color_scheme = section.settings.color_scheme | strip
   assign scheme_bg_color = settings.color_schemes[selected_color_scheme].settings.section_bg
+  assign title_tag = 'h2'
 
   assign transparent = false
   if scheme_bg_color == 'rgba(0,0,0,0)' or scheme_bg_color == blank
     assign transparent = true
   endif
+
+  unless section.settings.title_tag == 'automatic'
+    assign title_tag = section.settings.title_tag
+  endunless
 -%}
 
 {%- capture style -%}
@@ -31,6 +36,8 @@
   {%- endunless -%}
 {%- endcapture -%}
 
+{%- render 'stylesheet', name: 'article.css' -%}
+
 <section
   class="article-single section-padding {{ color_scheme }}"
   data-section-id="{{ section.id }}"
@@ -39,7 +46,7 @@
 >
   <div class="article__hero text-center">
     <div class="wrapper">
-      <h2 class="article__title h2">{{ article.title }}</h2>
+      <{{ title_tag }} class="article__title">{{ article.title }}</{{ title_tag }}>
 
       {%- if show_date or show_author -%}
         <p class="article__meta">
@@ -94,7 +101,7 @@
             {%- endif -%}
 
             <div class="article__author__text">
-              <h3>
+              <h3 class="h6">
                 {{ article.user.first_name }}
                 {{ article.user.last_name }}
               </h3>
@@ -130,7 +137,7 @@
           {%- if blog.next_article or blog.previous_article -%}
             <div class="hr"></div>
 
-            <aside class="clearfix">
+            <aside class="flex space-between">
               {%- if blog.next_article -%}
                 <small class="right">
                   {%- for post in blog.articles -%}
@@ -142,7 +149,7 @@
                       >
                         <span>{{ 'blogs.article.newer_post' | t }}</span>
 
-                        {%- render 'icon-arrow-right' -%}
+                        {%- render 'icon-nav-arrow-right' -%}
                       </a>
                     {%- endif -%}
                   {%- endfor -%}
@@ -158,7 +165,7 @@
                         class="btn btn--text btn--text-no-underline btn--small"
                         title="{{ post.title | strip_html | escape }}"
                       >
-                        {%- render 'icon-arrow-left' -%}
+                        {%- render 'icon-nav-arrow-left' -%}
 
                         <span>{{ 'blogs.article.older_post' | t }}</span>
                       </a>
@@ -217,8 +224,7 @@
                                   <summary class="widget__accordion-title" data-collapsible-trigger>
                                     {{- link.title -}}
 
-                                    {%- render 'icon-plus' -%}
-                                    {%- render 'icon-minus' -%}
+                                    {%- render 'icon-nav-arrow-down' -%}
                                   </summary>
 
                                   <div data-collapsible-body{% if open_submenu %} style="height: auto;"{% endif %}>
@@ -718,6 +724,25 @@
       "unit": "px",
       "label": "Bottom",
       "default": 50
+    },
+    {
+      "type": "header",
+      "content": "Advanced"
+    },
+    {
+      "type": "select",
+      "id": "title_tag",
+      "label": "Title SEO tag",
+      "default": "automatic",
+      "options": [
+        {"value": "automatic", "label": "Automatic"},
+        {"value": "h1", "label": "H1"},
+        {"value": "h2", "label": "H2"},
+        {"value": "h3", "label": "H3"},
+        {"value": "h4", "label": "H4"},
+        {"value": "h5", "label": "H5"},
+        {"value": "h6", "label": "H6"}
+      ]
     }
   ],
   "blocks": [

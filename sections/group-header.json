@@ -1,1 +1,217 @@
-{"type":"header","name":"Header","sections":{"announcement":{"type":"announcement","blocks":{"text_PwfBX8":{"type":"text","settings":{"text":"<p>15% Off for Sitewide with WELCOME15 and Free Shipping. Shop Now!<\/p>","target_url_enabled":false,"target_url":"","target_referrer_enabled":false,"target_referrer":"","target_device_enabled":false,"target_device":"mobile"}}},"block_order":["text_PwfBX8"],"settings":{"show_border":true,"layout":"slider","slider_speed":5,"text_alignment":"center","show_arrows":false,"marquee_speed":50,"message_spacing":45,"text_font_size":"body-medium","color_scheme":"scheme-4cbdac56-2c2c-4226-aab4-d5ba3830d95c","border_color":"","padding_top":0,"padding_bottom":0}},"header":{"type":"header","blocks":{"6fbe7996-9e29-44e9-aa06-80ef8cd41fa9":{"type":"image","settings":{"position":"2","image":"shopify:\/\/shop_images\/lQDPJxtgaf5dcMnNA7jNBaewVzCHq0KywSoJjwaH9f4fAQ_1447_952.jpg","aspect_ratio":0.5,"wide_image":true,"overlay_opacity":0,"overlay_color":"#ffffff","title":"","heading_font_size":"heading-medium","link_text":"","text_font_size":"body-medium","link":"shopify:\/\/collections\/lab-grown-diamond-engagement-rings","text_color":""}},"image_4Yqakb":{"type":"image","settings":{"position":"3","image":"shopify:\/\/shop_images\/lQDPJxdRxXL1FzfNBUbNBDiwA_HFdoj1VG8H_BQ9iEqjAA_1080_1350.jpg","aspect_ratio":0.5,"wide_image":true,"overlay_opacity":0,"overlay_color":"#000000","title":"","heading_font_size":"heading-small","link_text":"","text_font_size":"body-medium","link":"shopify:\/\/collections\/wedding-rings-bands","text_color":"#ffffff"}},"image_3HyBh7":{"type":"image","settings":{"position":"4","image":"shopify:\/\/shop_images\/top_menu_earring_collection_webp.webp","aspect_ratio":0.5,"wide_image":true,"overlay_opacity":0,"overlay_color":"#000000","title":"TRENDING","heading_font_size":"heading-medium","link_text":"","text_font_size":"body-medium","link":"shopify:\/\/collections\/earrings","text_color":"#000000"}},"image_kPDje3":{"type":"image","settings":{"position":"6","image":"shopify:\/\/shop_images\/infinite_ring_a1ed2767-01d6-4aec-989b-b7fbf44d5f3d.jpg","aspect_ratio":0.5,"wide_image":true,"overlay_opacity":0,"overlay_color":"#000000","title":"","heading_font_size":"heading-medium","link_text":"","text_font_size":"body-medium","link":"shopify:\/\/collections\/the-treasured-project","text_color":""}},"image_HQ3gqk":{"type":"image","settings":{"position":"5","image":"shopify:\/\/shop_images\/TOP_MENU_NECKLACE_WEBP.webp","aspect_ratio":0.5,"wide_image":true,"overlay_opacity":0,"overlay_color":"#000000","title":"","heading_font_size":"heading-medium","link_text":"","text_font_size":"body-medium","link":"shopify:\/\/collections\/necklaces","text_color":""}},"image_dgjHQ9":{"type":"image","settings":{"position":"7","image":"shopify:\/\/shop_images\/FEATURED_webp.webp","aspect_ratio":0.5,"wide_image":true,"overlay_opacity":0,"overlay_color":"#000000","title":"","heading_font_size":"heading-small","link_text":"","text_font_size":"body-medium","link":"shopify:\/\/collections\/lab-grown-diamond-engagement-rings","text_color":"#102663"}},"image_jfkEM3":{"type":"image","settings":{"position":"8","image":"shopify:\/\/shop_images\/about_agvana_showroom_webp_7c8116d2-6963-4291-8b66-6abcef6eb1ee.webp","aspect_ratio":0.5,"wide_image":true,"overlay_opacity":0,"overlay_color":"#000000","title":"","heading_font_size":"heading-medium","link_text":"","text_font_size":"body-medium","link":"shopify:\/\/pages\/our-story","text_color":"#ffffff"}}},"block_order":["6fbe7996-9e29-44e9-aa06-80ef8cd41fa9","image_4Yqakb","image_3HyBh7","image_kPDje3","image_HQ3gqk","image_dgjHQ9","image_jfkEM3"],"settings":{"header_sticky":true,"header_style":"logo_above","show_separator_line":true,"header_border_color":"","separator_opacity":25,"show_icons":true,"icon_as_circle":false,"cart_icon_family":"cart","logo":"shopify:\/\/shop_images\/6666.png","logo_max_limit":165,"logo_max_limit_mobile":120,"main_menu_linklist":"main-menu","mobile_menu_linklist":"","enable_search":true,"show_social_icons":false,"button_text":"","button_link":"","button_type":"btn--primary","show_locale_selector":true,"show_globe_icon":false,"show_country_selector":true,"show_country_name":false,"show_country_flag":true,"highlight_item":"","highlight_item_color":"#ffffff","transparent_logo":"shopify:\/\/shop_images\/777_bb10f0cb-d8f5-44c4-88fb-8b0d8d10238d.png","transparent_home":false,"transparent_collection":false,"transparent_article":false,"transparent_page":false,"transparent_product_page":false,"secondary_menu_linklist":"footer-1","tertiary_menu_linklist":"","padding_top":15,"padding_bottom":15}}},"order":["announcement","header"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "header",
+  "name": "Header",
+  "sections": {
+    "announcement": {
+      "type": "announcement",
+      "blocks": {
+        "text_PwfBX8": {
+          "type": "text",
+          "settings": {
+            "text": "<p>15% Off for Sitewide with WELCOME15 and Free Shipping. Shop Now!</p>",
+            "target_url_enabled": false,
+            "target_url": "",
+            "target_referrer_enabled": false,
+            "target_referrer": "",
+            "target_device_enabled": false,
+            "target_device": "mobile"
+          }
+        }
+      },
+      "block_order": [
+        "text_PwfBX8"
+      ],
+      "settings": {
+        "show_border": true,
+        "layout": "slider",
+        "slider_speed": 5,
+        "text_alignment": "center",
+        "show_arrows": false,
+        "marquee_speed": 50,
+        "message_spacing": 45,
+        "text_font_size": "body-medium",
+        "color_scheme": "scheme-4cbdac56-2c2c-4226-aab4-d5ba3830d95c",
+        "border_color": "",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "header": {
+      "type": "header",
+      "blocks": {
+        "6fbe7996-9e29-44e9-aa06-80ef8cd41fa9": {
+          "type": "image",
+          "settings": {
+            "position": "2",
+            "image": "shopify://shop_images/lQDPJxtgaf5dcMnNA7jNBaewVzCHq0KywSoJjwaH9f4fAQ_1447_952.jpg",
+            "aspect_ratio": 0.5,
+            "wide_image": true,
+            "overlay_type": "text",
+            "title": "",
+            "heading_font_size": "heading-medium",
+            "link_text": "",
+            "text_font_size": "body-medium",
+            "link": "shopify://collections/lab-grown-diamond-engagement-rings",
+            "text_color": ""
+          }
+        },
+        "image_4Yqakb": {
+          "type": "image",
+          "settings": {
+            "position": "3",
+            "image": "shopify://shop_images/lQDPJxdRxXL1FzfNBUbNBDiwA_HFdoj1VG8H_BQ9iEqjAA_1080_1350.jpg",
+            "aspect_ratio": 0.5,
+            "wide_image": true,
+            "overlay_type": "text",
+            "title": "",
+            "heading_font_size": "heading-small",
+            "link_text": "",
+            "text_font_size": "body-medium",
+            "link": "shopify://collections/wedding-rings-bands",
+            "text_color": "#ffffff"
+          }
+        },
+        "image_3HyBh7": {
+          "type": "image",
+          "settings": {
+            "position": "4",
+            "image": "shopify://shop_images/TOP_MENU_WEBP.webp",
+            "aspect_ratio": 0.5,
+            "wide_image": true,
+            "overlay_type": "text",
+            "title": "",
+            "heading_font_size": "heading-medium",
+            "link_text": "",
+            "text_font_size": "body-medium",
+            "link": "shopify://collections/earrings",
+            "text_color": "#000000"
+          }
+        },
+        "image_kPDje3": {
+          "type": "image",
+          "settings": {
+            "position": "5",
+            "image": "shopify://shop_images/infinite_ring_a1ed2767-01d6-4aec-989b-b7fbf44d5f3d.jpg",
+            "aspect_ratio": 0.5,
+            "wide_image": true,
+            "overlay_type": "text",
+            "title": "",
+            "heading_font_size": "heading-medium",
+            "link_text": "",
+            "text_font_size": "body-medium",
+            "link": "shopify://collections/the-treasured-project",
+            "text_color": ""
+          }
+        },
+        "image_HQ3gqk": {
+          "type": "image",
+          "disabled": true,
+          "settings": {
+            "position": "5",
+            "image": "shopify://shop_images/TOP_MENU_NECKLACE_WEBP.webp",
+            "aspect_ratio": 0.5,
+            "wide_image": true,
+            "overlay_type": "text",
+            "title": "",
+            "heading_font_size": "heading-medium",
+            "link_text": "",
+            "text_font_size": "body-medium",
+            "link": "shopify://collections/necklaces",
+            "text_color": ""
+          }
+        },
+        "image_dgjHQ9": {
+          "type": "image",
+          "settings": {
+            "position": "6",
+            "image": "shopify://shop_images/FEATURED_webp.webp",
+            "aspect_ratio": 0.5,
+            "wide_image": true,
+            "overlay_type": "text",
+            "title": "",
+            "heading_font_size": "heading-small",
+            "link_text": "",
+            "text_font_size": "body-medium",
+            "link": "shopify://collections/lab-grown-diamond-engagement-rings",
+            "text_color": "#102663"
+          }
+        },
+        "image_jfkEM3": {
+          "type": "image",
+          "settings": {
+            "position": "7",
+            "image": "shopify://shop_images/about_agvana_showroom_webp_7c8116d2-6963-4291-8b66-6abcef6eb1ee.webp",
+            "aspect_ratio": 0.5,
+            "wide_image": true,
+            "overlay_type": "text",
+            "title": "",
+            "heading_font_size": "heading-medium",
+            "link_text": "",
+            "text_font_size": "body-medium",
+            "link": "shopify://pages/our-story",
+            "text_color": "#ffffff"
+          }
+        }
+      },
+      "block_order": [
+        "6fbe7996-9e29-44e9-aa06-80ef8cd41fa9",
+        "image_4Yqakb",
+        "image_3HyBh7",
+        "image_kPDje3",
+        "image_HQ3gqk",
+        "image_dgjHQ9",
+        "image_jfkEM3"
+      ],
+      "settings": {
+        "header_sticky": true,
+        "enable_search": true,
+        "header_style": "logo_above",
+        "show_separator_line": true,
+        "header_border_color": "",
+        "separator_opacity": 25,
+        "show_icons": true,
+        "icon_as_circle": false,
+        "cart_icon_family": "cart",
+        "logo": "shopify://shop_images/6666.png",
+        "logo_max_limit": 165,
+        "logo_max_limit_mobile": 120,
+        "main_menu_linklist": "main-menu",
+        "enable_call_to_action": false,
+        "button_text": "",
+        "button_link": "",
+        "button_type": "btn--primary",
+        "show_social_icons": false,
+        "secondary_menu_linklist": "",
+        "show_locale_selector": true,
+        "show_locale_code": false,
+        "show_globe_icon": false,
+        "show_country_selector": true,
+        "show_country_name": false,
+        "show_country_flag": true,
+        "highlight_item": "",
+        "highlight_item_color": "#ffffff",
+        "transparent_logo": "shopify://shop_images/777_bb10f0cb-d8f5-44c4-88fb-8b0d8d10238d.png",
+        "transparent_home": false,
+        "transparent_collection": false,
+        "transparent_article": false,
+        "transparent_page": false,
+        "transparent_product_page": false,
+        "padding_top": 15,
+        "padding_bottom": 15
+      }
+    }
+  },
+  "order": [
+    "announcement",
+    "header"
+  ]
+}

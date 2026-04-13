@@ -1,20 +1,9 @@
 <!doctype html>
-<html class="no-js no-touch supports-no-cookies" lang="{{ request.locale.iso_code }}">
+<html class="no-touch supports-no-cookies" lang="{{ request.locale.iso_code }}">
   <head>
     {%- render 'head' -%}
 
     {{ content_for_header }}
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XDZGQ7BPFK"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-
-      gtag('config', 'G-XDZGQ7BPFK');
-    </script>
   </head>
 
   <body
@@ -47,10 +36,6 @@
       {% sections 'group-footer' %}
     </footer>
 
-    {%- if settings.swatches_type != 'disabled' -%}
-      {% render 'template-swatch' %}
-    {%- endif -%}
-
     {% render 'zoom-pswp' %}
 
     {%- if template.name != 'product' and settings.show_scroll_top_button -%}
@@ -60,7 +45,7 @@
         aria-label="{{ 'general.accessibility.scroll_to_top' | t }}"
         data-scroll-top-button
       >
-        {%- render 'icon-arrow-up' -%}
+        {%- render 'icon-nav-arrow-up' -%}
       </button>
     {%- endif -%}
 

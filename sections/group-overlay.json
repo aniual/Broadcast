@@ -1,1 +1,92 @@
-{"type":"aside","name":"Overlay","sections":{"cart_drawer_PRgRwi":{"type":"cart-drawer","blocks":{"cart_message_eJLxf3":{"type":"cart-message","settings":{"cart_custom_message_text":"<p>Use coupon code <strong>AG10<\/strong> for 10% off your first order.<\/p>","cart_custom_message_color":"","pin_to_bottom":false}},"title_pEMehp":{"type":"title","settings":{"title":"Cart"}},"free_shipping_piVeUk":{"type":"free-shipping","settings":{"message":"You are ||amount|| away from free shipping.","free_shipping_gradient":"","pin_to_bottom":false}},"order_note_G8Jay9":{"type":"order-note","settings":{"pin_to_bottom":false}},"gift_note_VEhzwm":{"type":"gift-note","disabled":true,"settings":{"pin_to_bottom":false}},"products_kYdEjA":{"type":"products","settings":{"pin_to_bottom":false}},"upsell_products_4gFgd8":{"type":"upsell-products","settings":{"upsell_auto_open":true,"pin_to_bottom":false}},"checkout_buttons_i6Y8Eh":{"type":"checkout-buttons","settings":{"enable_additional_buttons":false,"show_view_cart_button":false,"pin_to_bottom":true}}},"block_order":["cart_message_eJLxf3","title_pEMehp","free_shipping_piVeUk","order_note_G8Jay9","gift_note_VEhzwm","products_kYdEjA","upsell_products_4gFgd8","checkout_buttons_i6Y8Eh"],"name":"Cart drawer","settings":{"color_scheme":"scheme-1"}}},"order":["cart_drawer_PRgRwi"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "aside",
+  "name": "Overlay",
+  "sections": {
+    "cart_drawer_PRgRwi": {
+      "type": "cart-drawer",
+      "blocks": {
+        "cart_message_eJLxf3": {
+          "type": "cart-message",
+          "settings": {
+            "cart_custom_message_text": "<p>Use coupon code <strong>AG10</strong> for 10% off your first order.</p>",
+            "cart_custom_message_color": "",
+            "pin_to_bottom": false
+          }
+        },
+        "title_pEMehp": {
+          "type": "title",
+          "settings": {
+            "title": "Cart"
+          }
+        },
+        "free_shipping_piVeUk": {
+          "type": "free-shipping",
+          "settings": {
+            "message": "You are ||amount|| away from free shipping.",
+            "pin_to_bottom": false
+          }
+        },
+        "order_note_G8Jay9": {
+          "type": "order-note",
+          "settings": {
+            "pin_to_bottom": false
+          }
+        },
+        "gift_note_VEhzwm": {
+          "type": "gift-note",
+          "disabled": true,
+          "settings": {
+            "pin_to_bottom": false
+          }
+        },
+        "products_kYdEjA": {
+          "type": "products",
+          "settings": {
+            "pin_to_bottom": false
+          }
+        },
+        "upsell_products_4gFgd8": {
+          "type": "upsell-products",
+          "settings": {
+            "upsell_auto_open": true,
+            "pin_to_bottom": false
+          }
+        },
+        "checkout_buttons_i6Y8Eh": {
+          "type": "checkout-buttons",
+          "settings": {
+            "enable_additional_buttons": false,
+            "show_view_cart_button": false,
+            "pin_to_bottom": true
+          }
+        }
+      },
+      "block_order": [
+        "cart_message_eJLxf3",
+        "title_pEMehp",
+        "free_shipping_piVeUk",
+        "order_note_G8Jay9",
+        "gift_note_VEhzwm",
+        "products_kYdEjA",
+        "upsell_products_4gFgd8",
+        "checkout_buttons_i6Y8Eh"
+      ],
+      "name": "Cart drawer",
+      "settings": {
+        "color_scheme": "scheme-1"
+      }
+    }
+  },
+  "order": [
+    "cart_drawer_PRgRwi"
+  ]
+}

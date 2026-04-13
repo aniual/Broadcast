@@ -8,6 +8,8 @@
   assign animation_order = 1
 -%}
 
+{%- render 'stylesheet', name: 'contact-form.css' -%}
+
 {%- style -%}
   #ContactForm--{{ section.id }} {
     --PT: {{ section.settings.padding_top }}px;
@@ -815,6 +817,7 @@
   "presets": [
     {
       "name": "Contact form",
+      "category": "Forms",
       "blocks": [
         {
           "type": "text",

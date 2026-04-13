@@ -1,11 +1,11 @@
 
 /*
 * @license
-* Broadcast Theme (c) Invisible Themes
+* Broadcast Theme (c) Presidio Creative
 *
 * This file is included for advanced development by
 * Shopify Agencies.  Modified versions of the theme
-* code are not supported by Shopify or Invisible Themes.
+* code are not supported by Shopify or Presidio Creative.
 *
 * In order to use this file you will need to change
 * theme.js to theme.dev.js in /layout/theme.liquid
@@ -38,17 +38,43 @@
 
     window.theme.focusable = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-    window.theme.getWindowWidth = function () {
-      return document.documentElement.clientWidth || document.body.clientWidth || window.innerWidth;
+    const PUB_SUB_EVENTS = {
+      cartUpdate: 'cart-update',
+      quantityUpdate: 'quantity-update',
+      optionValueSelectionChange: 'option-value-selection-change',
+      variantChange: 'variant-change',
+      cartError: 'cart-error',
     };
 
-    window.theme.getWindowHeight = function () {
-      return document.documentElement.clientHeight || document.body.clientHeight || window.innerHeight;
-    };
+    window.theme.PUB_SUB_EVENTS = PUB_SUB_EVENTS;
 
-    window.theme.isMobile = function () {
-      return window.theme.getWindowWidth() < window.theme.sizes.small;
-    };
+    let subscribers = {};
+
+    function subscribe$1(eventName, callback) {
+      if (subscribers[eventName] === undefined) {
+        subscribers[eventName] = [];
+      }
+
+      subscribers[eventName] = [...subscribers[eventName], callback];
+
+      return function unsubscribe() {
+        subscribers[eventName] = subscribers[eventName].filter((cb) => {
+          return cb !== callback;
+        });
+      };
+    }
+
+    function publish$1(eventName, data) {
+      if (subscribers[eventName]) {
+        const promises = subscribers[eventName].map((callback) => callback(data));
+        return Promise.all(promises);
+      } else {
+        return Promise.resolve();
+      }
+    }
+
+    window.publish = publish$1;
+    window.subscribe = subscribe$1;
 
     /**
      * Currency Helpers
@@ -138,21 +164,19 @@
 
     window.theme.readHeights = function () {
       const h = {};
-      h.windowHeight = Math.min(window.screen.height, window.innerHeight);
-      h.footerHeight = getHeight('[data-section-type*="footer"]');
+      h.windowHeight = Math.min(window.screen.height, theme.windowHeight);
       h.headerHeight = getHeight('[data-header-height]');
       h.stickyHeaderHeight = document.querySelector('[data-header-sticky]') ? h.headerHeight : 0;
       h.collectionNavHeight = getHeight('[data-collection-nav]');
-      h.logoHeight = getFooterLogoWithPadding();
 
       return h;
     };
 
     function setVars() {
-      const {windowHeight, headerHeight, logoHeight, footerHeight, collectionNavHeight} = window.theme.readHeights();
+      const {windowHeight, headerHeight, collectionNavHeight} = window.theme.readHeights();
       const currentScreenOrientation = getScreenOrientation();
 
-      if (!firstLoad || currentScreenOrientation !== screenOrientation || window.innerWidth > window.theme.sizes.mobile) {
+      if (!firstLoad || currentScreenOrientation !== screenOrientation || theme.windowWidth > window.theme.sizes.mobile) {
         // Only update the heights on screen orientation change or larger than mobile devices
         document.documentElement.style.setProperty('--full-height', `${windowHeight}px`);
         document.documentElement.style.setProperty('--three-quarters', `${windowHeight * (3 / 4)}px`);
@@ -167,9 +191,6 @@
 
       document.documentElement.style.setProperty('--collection-nav-height', `${collectionNavHeight}px`);
       document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-      document.documentElement.style.setProperty('--footer-height', `${footerHeight}px`);
-      document.documentElement.style.setProperty('--content-full', `${windowHeight - headerHeight - logoHeight / 2}px`);
-      document.documentElement.style.setProperty('--content-min', `${windowHeight - headerHeight - footerHeight}px`);
     }
 
     function getScreenOrientation() {
@@ -191,20 +212,26 @@
       }
     }
 
-    function getFooterLogoWithPadding() {
-      const height = getHeight('[data-footer-logo]');
-      if (height > 0) {
-        return height + 20;
-      } else {
-        return 0;
-      }
-    }
-
     setVars();
 
     window.addEventListener('DOMContentLoaded', setVars);
     document.addEventListener('theme:resize', setVars);
     document.addEventListener('shopify:section:load', setVars);
+
+    function pauseAllMedia() {
+      document.querySelectorAll('[data-host="youtube"]').forEach((video) => {
+        video.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      });
+      document.querySelectorAll('[data-host="vimeo"]').forEach((video) => {
+        video.contentWindow.postMessage('{"method":"pause"}', '*');
+      });
+      document.querySelectorAll('video').forEach((video) => video.pause());
+      document.querySelectorAll('product-model').forEach((model) => {
+        if (model.modelViewerUI) model.modelViewerUI.pause();
+      });
+    }
+
+    window.theme.pauseAllMedia = pauseAllMedia;
 
     window.theme.scrollTo = (elementTop) => {
       const stickyHeaderHeight = document.querySelector('[data-header-sticky]') ? document.querySelector('[data-header-height]').offsetHeight : 0;
@@ -469,6 +496,135 @@
       };
     };
 
+    class QuantityInput extends HTMLElement {
+      constructor() {
+        super();
+        this.input = this.querySelector('input');
+        this.changeEvent = new Event('change', {bubbles: true});
+        this.input.addEventListener('change', this.onInputChange.bind(this));
+        this.querySelectorAll('button').forEach((button) => button.addEventListener('click', this.onButtonClick.bind(this)));
+      }
+
+      quantityUpdateUnsubscriber = undefined;
+
+      connectedCallback() {
+        this.validateQtyRules();
+        this.quantityUpdateUnsubscriber = subscribe(theme.PUB_SUB_EVENTS.quantityUpdate, this.validateQtyRules.bind(this));
+      }
+
+      disconnectedCallback() {
+        if (this.quantityUpdateUnsubscriber) {
+          this.quantityUpdateUnsubscriber();
+        }
+      }
+
+      onInputChange(event) {
+        this.validateQtyRules();
+        if (this.input && this.input.name === 'updates[]') {
+          this.updateCart();
+        }
+      }
+
+      onButtonClick(event) {
+        event.preventDefault();
+        const previousValue = this.input.value;
+        const button = event.target.nodeName === 'BUTTON' ? event.target : event.target.closest('button');
+        const name = button ? button.name : undefined;
+
+        const isIncrease = name === 'increase' || name === 'plus';
+        const isDecrease = name === 'decrease' || name === 'minus';
+
+        if (isIncrease) {
+          if (parseInt(this.input?.dataset?.min) > parseInt(this.input.step) && this.input.value == 0) {
+            this.input.value = this.input.dataset.min;
+          } else {
+            this.input.stepUp();
+          }
+        } else if (isDecrease) {
+          this.input.stepDown();
+        }
+
+        if (previousValue !== this.input.value) this.input.dispatchEvent(this.changeEvent);
+
+        if (this.input?.dataset?.min === previousValue && isDecrease) {
+          this.input.value = parseInt(this.input.min);
+        }
+      }
+
+      validateQtyRules() {
+        const value = parseInt(this.input.value);
+        if (this.input.min) {
+          const buttonMinus = this.querySelector(".quantity__button[name='minus']") || this.querySelector(".quantity__button[name='decrease']");
+          if (buttonMinus) buttonMinus.classList.toggle('disabled', parseInt(value) <= parseInt(this.input.min));
+        }
+        if (this.input.max) {
+          const max = parseInt(this.input.max);
+          const buttonPlus = this.querySelector(".quantity__button[name='plus']") || this.querySelector(".quantity__button[name='increase']");
+          if (buttonPlus) buttonPlus.classList.toggle('disabled', value >= max);
+        }
+      }
+
+      updateCart() {
+        if (!this.input || this.input.value === '') return;
+        this.dispatchEvent(
+          new CustomEvent('theme:cart:update', {
+            bubbles: true,
+            detail: {
+              id: this.input.dataset.id,
+              quantity: this.input.value,
+            },
+          })
+        );
+      }
+    }
+
+    customElements.define('quantity-input', QuantityInput);
+
+    class HTMLUpdateUtility {
+      /**
+       * Used to swap an HTML node with a new node.
+       * The new node is inserted as a previous sibling to the old node, the old node is hidden, and then the old node is removed.
+       *
+       * The function currently uses a double buffer approach, but this should be replaced by a view transition once it is more widely supported https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API
+       */
+      static viewTransition(oldNode, newContent, preProcessCallbacks = [], postProcessCallbacks = []) {
+        preProcessCallbacks?.forEach((callback) => callback(newContent));
+
+        const newNodeWrapper = document.createElement('div');
+        HTMLUpdateUtility.setInnerHTML(newNodeWrapper, newContent.outerHTML);
+        const newNode = newNodeWrapper.firstChild;
+
+        // dedupe IDs
+        const uniqueKey = Date.now();
+        oldNode.querySelectorAll('[id], [form]').forEach((element) => {
+          element.id && (element.id = `${element.id}-${uniqueKey}`);
+          element.form && element.setAttribute('form', `${element.form.getAttribute('id')}-${uniqueKey}`);
+        });
+
+        oldNode.parentNode.insertBefore(newNode, oldNode);
+        oldNode.style.display = 'none';
+
+        postProcessCallbacks?.forEach((callback) => callback(newNode));
+
+        setTimeout(() => oldNode.remove(), 500);
+      }
+
+      // Sets inner HTML and reinjects the script tags to allow execution. By default, scripts are disabled when using element.innerHTML.
+      static setInnerHTML(element, html) {
+        element.innerHTML = html;
+        element.querySelectorAll('script').forEach((oldScriptTag) => {
+          const newScriptTag = document.createElement('script');
+          Array.from(oldScriptTag.attributes).forEach((attribute) => {
+            newScriptTag.setAttribute(attribute.name, attribute.value);
+          });
+          newScriptTag.appendChild(document.createTextNode(oldScriptTag.innerHTML));
+          oldScriptTag.parentNode.replaceChild(newScriptTag, oldScriptTag);
+        });
+      }
+    }
+
+    window.HTMLUpdateUtility = HTMLUpdateUtility;
+
     function appendCartItems() {
       if (document.querySelector('cart-items')) return;
 
@@ -478,8 +634,7 @@
     }
 
     function floatLabels(container) {
-      const floats = container.querySelectorAll('.form-field');
-      floats.forEach((element) => {
+      container.querySelectorAll('.form-field').forEach((element) => {
         const label = element.querySelector('label');
         const input = element.querySelector('input, textarea');
         if (label && input) {
@@ -497,44 +652,66 @@
       });
     }
 
-    let lastWindowWidth = window.theme.getWindowWidth();
-    let lastWindowHeight = window.theme.getWindowHeight();
+    window.theme.windowWidth = getWindowWidth();
+    window.theme.windowHeight = getWindowHeight();
+    window.theme.isMobile = isMobile();
+
+    let lastScale = window.visualViewport ? window.visualViewport.scale : 1;
 
     function dispatch$1() {
-      document.dispatchEvent(
-        new CustomEvent('theme:resize', {
-          bubbles: true,
-        })
-      );
-
-      if (lastWindowWidth !== window.theme.getWindowWidth()) {
-        document.dispatchEvent(
-          new CustomEvent('theme:resize:width', {
-            bubbles: true,
-          })
-        );
-
-        lastWindowWidth = window.theme.getWindowWidth();
+      // Update isMobile state before dispatching event
+      const currentMediaQuery = isMobile();
+      if (window.theme.isMobile !== currentMediaQuery) {
+        window.theme.isMobile = currentMediaQuery;
       }
 
-      if (lastWindowHeight !== window.theme.getWindowHeight()) {
-        document.dispatchEvent(
-          new CustomEvent('theme:resize:height', {
-            bubbles: true,
-          })
-        );
+      const currentWidth = getWindowWidth();
+      const currentHeight = getWindowHeight();
 
-        lastWindowHeight = window.theme.getWindowHeight();
+      if (window.theme.windowWidth !== currentWidth) {
+        document.dispatchEvent(new CustomEvent('theme:resize:width', {bubbles: true}));
+        window.theme.windowWidth = currentWidth;
       }
+
+      if (window.theme.windowHeight !== currentHeight) {
+        document.dispatchEvent(new CustomEvent('theme:resize:height', {bubbles: true}));
+        window.theme.windowHeight = currentHeight;
+      }
+
+      document.dispatchEvent(new CustomEvent('theme:resize', {bubbles: true}));
     }
 
     function resizeListener() {
       window.addEventListener(
         'resize',
         window.theme.debounce(function () {
+          // Check if viewport is zoomed (scaled)
+          const currentScale = window.visualViewport ? window.visualViewport.scale : 1;
+          const zooming = Math.abs(currentScale - lastScale) > 0.05;
+
+          if (zooming) {
+            // Zoom detected — ignore resize
+            lastScale = currentScale;
+            return;
+          }
+
+          lastScale = currentScale;
+
           dispatch$1();
         }, 50)
       );
+    }
+
+    function getWindowWidth() {
+      return document.documentElement.clientWidth || document.body.clientWidth || window.innerWidth;
+    }
+
+    function getWindowHeight() {
+      return document.documentElement.clientHeight || document.body.clientHeight || window.innerHeight;
+    }
+
+    function isMobile() {
+      return window.innerWidth < theme.sizes.small;
     }
 
     let prev = window.scrollY;
@@ -706,11 +883,11 @@
       document.body.classList.add('is-loaded');
     }
 
-    const classes$q = {
+    const classes$k = {
       loading: 'is-loading',
     };
 
-    const selectors$v = {
+    const selectors$n = {
       img: 'img.is-loading',
     };
 
@@ -721,12 +898,12 @@
       document.addEventListener(
         'load',
         (e) => {
-          if (e.target.tagName.toLowerCase() == 'img' && e.target.classList.contains(classes$q.loading)) {
-            e.target.classList.remove(classes$q.loading);
-            e.target.parentNode.classList.remove(classes$q.loading);
+          if (e.target.tagName.toLowerCase() == 'img' && e.target.classList.contains(classes$k.loading)) {
+            e.target.classList.remove(classes$k.loading);
+            e.target.parentNode.classList.remove(classes$k.loading);
 
-            if (e.target.parentNode.parentNode.classList.contains(classes$q.loading)) {
-              e.target.parentNode.parentNode.classList.remove(classes$q.loading);
+            if (e.target.parentNode.parentNode.classList.contains(classes$k.loading)) {
+              e.target.parentNode.parentNode.classList.remove(classes$k.loading);
             }
           }
         },
@@ -738,25 +915,25 @@
       Remove "is-loading" class to the loaded images and their containers
     */
     function removeLoadingClassFromLoadedImages(container) {
-      container.querySelectorAll(selectors$v.img).forEach((img) => {
+      container.querySelectorAll(selectors$n.img).forEach((img) => {
         if (img.complete) {
-          img.classList.remove(classes$q.loading);
-          img.parentNode.classList.remove(classes$q.loading);
+          img.classList.remove(classes$k.loading);
+          img.parentNode.classList.remove(classes$k.loading);
 
-          if (img.parentNode.parentNode.classList.contains(classes$q.loading)) {
-            img.parentNode.parentNode.classList.remove(classes$q.loading);
+          if (img.parentNode.parentNode.classList.contains(classes$k.loading)) {
+            img.parentNode.parentNode.classList.remove(classes$k.loading);
           }
         }
       });
     }
 
-    const selectors$u = {
+    const selectors$m = {
       aos: '[data-aos]:not(.aos-animate)',
       aosAnchor: '[data-aos-anchor]',
       aosIndividual: '[data-aos]:not([data-aos-anchor]):not(.aos-animate)',
     };
 
-    const classes$p = {
+    const classes$j = {
       aosAnimate: 'aos-animate',
     };
 
@@ -772,8 +949,8 @@
       for (const mutation of mutationList) {
         if (mutation.type === 'childList') {
           const element = mutation.target;
-          const elementsToAnimate = element.querySelectorAll(selectors$u.aos);
-          const anchors = element.querySelectorAll(selectors$u.aosAnchor);
+          const elementsToAnimate = element.querySelectorAll(selectors$m.aos);
+          const anchors = element.querySelectorAll(selectors$m.aosAnchor);
 
           if (elementsToAnimate.length) {
             elementsToAnimate.forEach((element) => {
@@ -796,7 +973,7 @@
       (entries, observer) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add(classes$p.aosAnimate);
+            entry.target.classList.add(classes$j.aosAnimate);
 
             // Stop observing element after it was animated
             observer.unobserve(entry.target);
@@ -817,16 +994,22 @@
       (entries, observer) => {
         entries.forEach((entry) => {
           if (entry.intersectionRatio) {
-            const elementsToAnimate = entry.target.querySelectorAll(selectors$u.aos);
+            const elementsToAnimate = entry.target.querySelectorAll(selectors$m.aos);
 
             if (elementsToAnimate.length) {
               elementsToAnimate.forEach((item) => {
-                item.classList.add(classes$p.aosAnimate);
+                item.classList.add(classes$j.aosAnimate);
               });
             }
 
             // Stop observing anchor element after inner elements were animated
             observer.unobserve(entry.target);
+
+            // Remove the container from the anchorContainers array
+            const sectionIndex = anchorContainers.indexOf('#' + entry.target.id);
+            if (sectionIndex !== -1) {
+              anchorContainers.splice(sectionIndex, 1);
+            }
           }
         });
       },
@@ -849,7 +1032,7 @@
       Observe animated elements that have attribute [data-aos]
     */
     function elementsIntersectionObserver() {
-      const elementsToAnimate = document.querySelectorAll(selectors$u.aosIndividual);
+      const elementsToAnimate = document.querySelectorAll(selectors$m.aosIndividual);
 
       if (elementsToAnimate.length) {
         elementsToAnimate.forEach((element) => {
@@ -862,7 +1045,7 @@
       Observe animated elements that have attribute [data-aos]
     */
     function anchorsIntersectionObserver() {
-      const anchors = document.querySelectorAll(selectors$u.aosAnchor);
+      const anchors = document.querySelectorAll(selectors$m.aosAnchor);
 
       if (anchors.length) {
         // Get all anchors and attach observers
@@ -871,7 +1054,7 @@
     }
 
     function initAnchorObservers(anchors) {
-      if (!anchors.length) return;
+      if (!anchors.length || Shopify.visualPreviewMode) return;
 
       anchors.forEach((anchor) => {
         const containerId = anchor.dataset.aosAnchor;
@@ -895,6 +1078,8 @@
 
       // Remove unloaded section from the anchors array on section:unload event
       document.addEventListener('shopify:section:unload', (e) => {
+        if (typeof e.target !== 'object' || e.target.nodeValue === 'undefined') return;
+
         const sectionId = '#' + e.target.querySelector('[data-section-id]')?.id;
         const sectionIndex = anchorContainers.indexOf(sectionId);
 
@@ -950,16 +1135,18 @@
 
     document.addEventListener('shopify:section:load', (e) => {
       const container = e.target;
+      if (typeof container !== 'object' || container.nodeValue === 'undefined') return;
+
       floatLabels(container);
       wrapElements(container);
       ariaToggle(document);
     });
 
-    const classes$o = {
+    const classes$i = {
       focus: 'is-focused',
     };
 
-    const selectors$t = {
+    const selectors$l = {
       inPageLink: '[data-skip-content]',
       linkesWithOnlyHash: 'a[href="#"]',
     };
@@ -975,8 +1162,8 @@
         // DOM Elements
         this.html = document.documentElement;
         this.body = document.body;
-        this.inPageLink = document.querySelector(selectors$t.inPageLink);
-        this.linkesWithOnlyHash = document.querySelectorAll(selectors$t.linkesWithOnlyHash);
+        this.inPageLink = document.querySelector(selectors$l.inPageLink);
+        this.linkesWithOnlyHash = document.querySelectorAll(selectors$l.linkesWithOnlyHash);
 
         // A11Y init methods
         this.a11y.focusHash();
@@ -1016,16 +1203,24 @@
        */
 
       focusEvents() {
+        let usingKeyboard = false;
+        let mouseDownTime = 0;
+
         document.addEventListener('mousedown', () => {
-          this.body.classList.remove(classes$o.focus);
+          usingKeyboard = false;
+          mouseDownTime = Date.now();
+          this.body.classList.remove(classes$i.focus);
         });
 
-        document.addEventListener('keyup', (event) => {
-          if (event.code !== 'Tab') {
-            return;
-          }
+        document.addEventListener('keydown', () => {
+          usingKeyboard = true;
+        });
 
-          this.body.classList.add(classes$o.focus);
+        document.addEventListener('focusin', () => {
+          // Add class if using keyboard (Tab) or no recent mouse interaction (VoiceOver)
+          if (usingKeyboard || Date.now() - mouseDownTime > 1000) {
+            this.body.classList.add(classes$i.focus);
+          }
         });
       }
     }
@@ -1037,14 +1232,40 @@
     */
     window.theme.waitForAnimationEnd = function (element) {
       return new Promise((resolve) => {
-        function onAnimationEnd(event) {
-          if (event.target != element) return;
+        if (!element) {
+          resolve();
+          return;
+        }
+
+        const computed = getComputedStyle(element);
+
+        const duration = parseFloat(computed.animationDuration) * 1000;
+        const delay = parseFloat(computed.animationDelay) * 1000;
+        const iterations = computed.animationIterationCount;
+
+        // Cases with no real animation
+        if (computed.display === 'none' || computed.animationName === 'none' || duration === 0 || iterations === 'infinite') {
+          resolve();
+          return;
+        }
+
+        const totalDuration = duration + delay;
+
+        function onAnimationEnd(e) {
+          if (e.currentTarget !== element) return;
 
           element.removeEventListener('animationend', onAnimationEnd);
+          clearTimeout(fallback);
           resolve();
         }
 
-        element?.addEventListener('animationend', onAnimationEnd);
+        element.addEventListener('animationend', onAnimationEnd);
+
+        // Fallback to avoid stuck Promise
+        const fallback = setTimeout(() => {
+          element.removeEventListener('animationend', onAnimationEnd);
+          resolve();
+        }, totalDuration + 50);
       });
     };
 
@@ -1083,7 +1304,7 @@
     }
     FetchError.prototype = Error.prototype;
 
-    const classes$n = {
+    const classes$h = {
       animated: 'is-animated',
       active: 'is-active',
       added: 'is-added',
@@ -1104,15 +1325,15 @@
       variantUnavailable: 'variant--unavailable',
     };
 
-    const selectors$s = {
+    const selectors$k = {
       apiContent: '[data-api-content]',
       apiLineItems: '[data-api-line-items]',
       apiUpsellItems: '[data-api-upsell-items]',
+      apiBundleItems: '[data-api-bundle-items]',
       apiCartPrice: '[data-api-cart-price]',
       animation: '[data-animation]',
-      additionalCheckoutButtons: '.additional-checkout-buttons',
       buttonSkipUpsellProduct: '[data-skip-upsell-product]',
-      cartBarAdd: '[data-add-to-cart-bar]',
+      cartBarAdd: '[data-cart-bar-add-to-cart]',
       cartCloseError: '[data-cart-error-close]',
       cartDrawer: 'cart-drawer',
       cartDrawerClose: '[data-cart-drawer-close]',
@@ -1144,13 +1365,21 @@
       quickAddModal: '[data-quick-add-modal]',
       qtyInput: 'input[name="updates[]"]',
       upsellProductsHolder: '[data-upsell-products]',
+      bundleProductsHolder: '[data-bundle-products]',
       upsellWidget: '[data-upsell-widget]',
+      bundleWidget: '[data-bundle-widget]',
       termsErrorMessage: '[data-terms-error-message]',
       collapsibleBody: '[data-collapsible-body]',
-      noscript: 'noscript',
+      discountInput: '[data-discount-input]',
+      discountField: '[data-discount-field]',
+      discountButton: '[data-apply-discount]',
+      discountBody: '[data-discount-body]',
+      discountCode: '[data-discount-code]',
+      discountErrorMessage: '[data-discount-error-message]',
+      removeDiscount: '[data-remove-discount]',
     };
 
-    const attributes$i = {
+    const attributes$d = {
       cartTotal: 'data-cart-total',
       disabled: 'disabled',
       freeShipping: 'data-free-shipping',
@@ -1164,6 +1393,9 @@
       scrollLocked: 'data-scroll-locked',
       upsellAutoOpen: 'data-upsell-auto-open',
       name: 'name',
+      maxInventoryReached: 'data-max-inventory-reached',
+      errorMessagePosition: 'data-error-message-position',
+      discountButton: 'data-cart-discount-button',
     };
 
     class CartItems extends HTMLElement {
@@ -1175,28 +1407,53 @@
 
       connectedCallback() {
         // DOM Elements
-        this.cartPage = document.querySelector(selectors$s.cartPage);
-        this.cartForm = document.querySelector(selectors$s.cartForm);
-        this.cartDrawer = document.querySelector(selectors$s.cartDrawer);
-        this.cartEmpty = document.querySelector(selectors$s.cartEmpty);
-        this.cartTermsCheckbox = document.querySelector(selectors$s.cartTermsCheckbox);
-        this.cartCheckoutButtonWrapper = document.querySelector(selectors$s.cartCheckoutButtonWrapper);
-        this.cartCheckoutButton = document.querySelector(selectors$s.cartCheckoutButton);
-        this.checkoutButtons = document.querySelector(selectors$s.checkoutButtons);
-        this.itemsHolder = document.querySelector(selectors$s.itemsHolder);
-        this.priceHolder = document.querySelector(selectors$s.priceHolder);
-        this.items = document.querySelectorAll(selectors$s.item);
-        this.cartTotal = document.querySelector(selectors$s.cartTotal);
-        this.freeShipping = document.querySelectorAll(selectors$s.freeShipping);
-        this.cartErrorHolder = document.querySelector(selectors$s.cartErrors);
-        this.cartCloseErrorMessage = document.querySelector(selectors$s.cartCloseError);
-        this.headerWrapper = document.querySelector(selectors$s.headerWrapper);
-        this.navDrawer = document.querySelector(selectors$s.navDrawer);
-        this.upsellProductsHolder = document.querySelector(selectors$s.upsellProductsHolder);
+        this.cartPage = document.querySelector(selectors$k.cartPage);
+        this.cartForm = document.querySelector(selectors$k.cartForm);
+        this.cartDrawer = document.querySelector(selectors$k.cartDrawer);
+        this.cartEmpty = document.querySelector(selectors$k.cartEmpty);
+        this.cartTermsCheckbox = document.querySelector(selectors$k.cartTermsCheckbox);
+        this.cartCheckoutButtonWrapper = document.querySelector(selectors$k.cartCheckoutButtonWrapper);
+        this.cartCheckoutButton = document.querySelector(selectors$k.cartCheckoutButton);
+        this.checkoutButtons = document.querySelector(selectors$k.checkoutButtons);
+        this.itemsHolder = document.querySelector(selectors$k.itemsHolder);
+        this.priceHolder = document.querySelector(selectors$k.priceHolder);
+        this.items = document.querySelectorAll(selectors$k.item);
+        this.cartTotal = document.querySelector(selectors$k.cartTotal);
+        this.freeShipping = document.querySelectorAll(selectors$k.freeShipping);
+        this.cartErrorHolder = document.querySelector(selectors$k.cartErrors);
+        this.cartCloseErrorMessage = document.querySelector(selectors$k.cartCloseError);
+        this.headerWrapper = document.querySelector(selectors$k.headerWrapper);
+        this.navDrawer = document.querySelector(selectors$k.navDrawer);
+        this.upsellProductsHolder = document.querySelector(selectors$k.upsellProductsHolder);
+        this.bundleProductsHolder = document.querySelector(selectors$k.bundleProductsHolder);
         this.subtotal = window.theme.subtotal;
+        this.discountInput = document.querySelector(selectors$k.discountInput);
+        this.discountField = document.querySelector(selectors$k.discountField);
+        this.discountButton = document.querySelector(selectors$k.discountButton);
+        this.hasDiscountBlock = !!document.querySelector(selectors$k.discountButton);
+        this.discountErrorMessage = document.querySelector(selectors$k.discountErrorMessage);
+        this.existingDiscountCodes = [];
+        this.discounts = document.querySelectorAll(selectors$k.discountBody);
 
         // Define Cart object depending on if we have cart drawer or cart page
         this.cart = this.cartDrawer || this.cartPage;
+
+        // Discounts
+        if (this.hasDiscountBlock) {
+          this.discountButton.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            const newDiscountCode = this.discountInput.value.trim();
+            this.discountInput.value = '';
+
+            if (newDiscountCode) {
+              this.applyDiscount(newDiscountCode);
+            }
+          });
+
+          // Fill existing discount codes and bind event listeners
+          this.bindDiscountEventListeners();
+        }
 
         // Cart events
         this.animateItems = this.animateItems.bind(this);
@@ -1214,15 +1471,16 @@
           document.addEventListener('theme:cart-drawer:close', this.onCartDrawerClose);
         }
 
-        // Upsell products
+        // Upsell or bundle products
         this.skipUpsellProductsArray = [];
-        this.skipUpsellProductEvent();
-        this.checkSkippedUpsellProductsFromStorage();
-        this.toggleCartUpsellWidgetVisibility();
+        this.skipBundleProductsArray = [];
+        this.skipUpsellOrBundleProductEvent();
+        this.checkSkippedUpsellOrBundleProductsFromStorage();
+        this.toggleCartUpsellOrBundleWidgetVisibility();
 
         // Free Shipping values
         this.circumference = 28 * Math.PI; // radius - stroke * 4 * PI
-        this.freeShippingLimit = this.freeShipping.length ? Number(this.freeShipping[0].getAttribute(attributes$i.freeShippingLimit)) * 100 * window.Shopify.currency.rate : 0;
+        this.freeShippingLimit = this.freeShipping.length ? Number(this.freeShipping[0].getAttribute(attributes$d.freeShippingLimit)) * 100 * window.Shopify.currency.rate : 0;
 
         this.freeShippingMessageHandle(this.subtotal);
         this.updateProgress();
@@ -1247,8 +1505,9 @@
 
         // Flags
         this.totalItems = this.items.length;
-
+        this.showCannotAddMoreInCart = false;
         this.cartUpdateFailed = false;
+        this.discountError = false;
 
         // Cart Events
         this.cartEvents();
@@ -1267,7 +1526,7 @@
         document.removeEventListener('theme:product:add', this.productAddCallback);
         document.removeEventListener('theme:product:add-error', this.productAddCallback);
 
-        if (document.documentElement.hasAttribute(attributes$i.scrollLocked)) {
+        if (document.documentElement.hasAttribute(attributes$d.scrollLocked)) {
           document.dispatchEvent(new CustomEvent('theme:scroll:unlock', {bubbles: true}));
         }
       }
@@ -1275,21 +1534,25 @@
       onCartDrawerClose() {
         this.resetAnimatedItems();
 
-        if (this.cartDrawer?.classList.contains(classes$n.open)) {
-          this.cart.classList.remove(classes$n.updated);
+        if (this.cartDrawer?.classList.contains(classes$h.open)) {
+          this.cart.classList.remove(classes$h.updated);
         }
 
-        this.cartEmpty.classList.remove(classes$n.updated);
-        this.cartErrorHolder.classList.remove(classes$n.expanded);
-        this.cart.querySelectorAll(selectors$s.animation).forEach((item) => {
+        this.cartEmpty.classList.remove(classes$h.updated);
+        this.cartErrorHolder.classList.remove(classes$h.expanded);
+        this.cart.querySelectorAll(selectors$k.animation).forEach((item) => {
           const removeHidingClass = () => {
-            item.classList.remove(classes$n.hiding);
+            item.classList.remove(classes$h.hiding);
             item.removeEventListener('animationend', removeHidingClass);
           };
 
-          item.classList.add(classes$n.hiding);
+          item.classList.add(classes$h.hiding);
           item.addEventListener('animationend', removeHidingClass);
         });
+
+        if (this.hasDiscountBlock) {
+          this.discountErrorMessage?.classList.add('hidden');
+        }
       }
 
       /**
@@ -1299,7 +1562,7 @@
        */
 
       cartUpdateEvents() {
-        this.items = document.querySelectorAll(selectors$s.item);
+        this.items = document.querySelectorAll(selectors$k.item);
 
         this.items.forEach((item) => {
           item.addEventListener('theme:cart:update', (event) => {
@@ -1321,14 +1584,14 @@
        */
 
       cartRemoveEvents() {
-        const cartItemRemove = document.querySelectorAll(selectors$s.cartItemRemove);
+        const cartItemRemove = document.querySelectorAll(selectors$k.cartItemRemove);
 
         cartItemRemove.forEach((button) => {
-          const item = button.closest(selectors$s.item);
+          const item = button.closest(selectors$k.item);
           button.addEventListener('click', (event) => {
             event.preventDefault();
 
-            if (button.classList.contains(classes$n.disabled)) return;
+            if (button.classList.contains(classes$h.disabled)) return;
 
             this.updateCart(
               {
@@ -1344,7 +1607,7 @@
           this.cartCloseErrorMessage.addEventListener('click', (event) => {
             event.preventDefault();
 
-            this.cartErrorHolder.classList.remove(classes$n.expanded);
+            this.cartErrorHolder.classList.remove(classes$h.expanded);
           });
         }
       }
@@ -1360,18 +1623,14 @@
         let button = event.detail.button;
 
         if (button.hasAttribute('disabled')) return;
-        const form = button.closest('form');
+        const form = button.form || button.closest('form');
         // Validate form
+
         if (!form.checkValidity()) {
           form.reportValidity();
           return;
         }
         formData = new FormData(form);
-
-        const hasInputsInNoScript = [...form.elements].some((el) => el.closest(selectors$s.noscript));
-        if (hasInputsInNoScript) {
-          formData = this.handleFormDataDuplicates([...form.elements], formData);
-        }
 
         if (form !== null && form.querySelector('[type="file"]')) {
           return;
@@ -1379,38 +1638,120 @@
         if (theme.settings.cartType === 'drawer' && this.cartDrawer) {
           event.preventDefault();
         }
+
+        const maxInventoryReached = form.getAttribute(attributes$d.maxInventoryReached);
+        const errorMessagePosition = form.getAttribute(attributes$d.errorMessagePosition);
+        this.showCannotAddMoreInCart = false;
+        if (maxInventoryReached === 'true' && errorMessagePosition === 'cart') {
+          this.showCannotAddMoreInCart = true;
+        }
+
         this.addToCart(formData, button);
       }
 
       /**
-       * Modify the `formData` object in case there are key/value pairs with an overlapping `key`
-       *  - the presence of form input fields inside a `noscript` tag leads to a duplicate `key`, which overwrites the existing `value` when the `FormData` is constructed
-       *  - such key/value pairs discrepancies occur in the Theme editor, when any setting is updated, and right before one presses the "Save" button
+       * Bind event listeners for discount elements
        *
-       * @param   {Array}  A list of all `HTMLFormElement.elements` DOM nodes
-       * @param   {Object}  `FormData` object, created with the `FormData()` constructor
-       *
-       * @return  {Object} Updated `FormData` object that does not contain any duplicate keys
+       * @return  {Void}
        */
-      handleFormDataDuplicates(elements, formData) {
-        if (!elements.length || typeof formData !== 'object') return formData;
+      bindDiscountEventListeners() {
+        if (!this.hasDiscountBlock) return;
 
-        elements.forEach((element) => {
-          if (element.closest(selectors$s.noscript)) {
-            const key = element.getAttribute(attributes$i.name);
-            const value = element.value;
+        this.discounts = document.querySelectorAll(selectors$k.discountBody);
 
-            if (key) {
-              const values = formData.getAll(key);
-              if (values.length > 1) values.splice(values.indexOf(value), 1);
+        this.discounts.forEach((discount) => {
+          const discountCode = discount.dataset.discountCode;
 
-              formData.delete(key);
-              formData.set(key, values[0]);
-            }
+          if (!this.existingDiscountCodes.includes(discountCode)) {
+            this.existingDiscountCodes.push(discountCode);
+          }
+
+          // Add event listener to remove discount
+          const removeButton = discount.querySelector(selectors$k.removeDiscount);
+          if (removeButton) {
+            // Remove existing listener to prevent duplicates
+            removeButton.removeEventListener('click', this.handleRemoveDiscount);
+
+            // Add new listener
+            removeButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              this.removeDiscount(discountCode);
+            });
           }
         });
+      }
 
-        return formData;
+      applyDiscount(discountCode) {
+        if (this.existingDiscountCodes.includes(discountCode)) {
+          this.discountErrorMessage.classList.remove('hidden');
+          this.discountErrorMessage.textContent = window.theme.strings.discount_already_applied;
+          return;
+        }
+
+        this.existingDiscountCodes.push(discountCode);
+        this.updateCartDiscounts(this.existingDiscountCodes.join(','));
+      }
+
+      removeDiscount(discountCode) {
+        if (!this.existingDiscountCodes.includes(discountCode)) return;
+
+        this.existingDiscountCodes = this.existingDiscountCodes.filter((code) => code !== discountCode);
+        this.updateCartDiscounts(this.existingDiscountCodes.join(','));
+      }
+
+      updateCartDiscounts(discountString) {
+        const lastAttemptedDiscount = discountString
+          .split(',')
+          .filter((c) => c)
+          .pop()
+          ?.trim();
+
+        this.disableCartButtons();
+        this.discountErrorMessage.classList.add('hidden');
+
+        fetch(window.theme.routes.cart_update_url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            discount: discountString,
+          }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then((text) => {
+            let data;
+            try {
+              data = JSON.parse(text);
+            } catch (e) {
+              console.error('Failed to parse cart update response:', text);
+              throw new Error('Invalid JSON response from server.');
+            }
+
+            if (lastAttemptedDiscount) {
+              const wasApplied = data.discount_codes && Array.isArray(data.discount_codes) && data.discount_codes.some((d) => d.code === lastAttemptedDiscount && d.applicable);
+
+              if (!wasApplied) {
+                this.discountError = true;
+                this.existingDiscountCodes = this.existingDiscountCodes.filter((code) => code !== lastAttemptedDiscount);
+              } else {
+                this.discountError = false;
+              }
+            } else {
+              this.discountError = false;
+            }
+
+            this.getCart();
+          })
+          .catch((error) => {
+            console.log(error);
+          });
       }
 
       /**
@@ -1432,21 +1773,21 @@
       }
 
       formSubmitHandler() {
-        const termsAccepted = document.querySelector(selectors$s.cartTermsCheckbox).checked;
-        const termsError = document.querySelector(selectors$s.termsErrorMessage);
+        const termsAccepted = document.querySelector(selectors$k.cartTermsCheckbox).checked;
+        const termsError = document.querySelector(selectors$k.termsErrorMessage);
 
         // Disable form submit if terms and conditions are not accepted
         if (!termsAccepted) {
-          if (document.querySelector(selectors$s.termsErrorMessage).length > 0) {
+          if (document.querySelector(selectors$k.termsErrorMessage).length > 0) {
             return;
           }
 
           termsError.innerText = theme.strings.cartAcceptanceError;
-          this.cartCheckoutButton.setAttribute(attributes$i.disabled, true);
-          termsError.classList.add(classes$n.expanded);
+          this.cartCheckoutButton.setAttribute(attributes$d.disabled, true);
+          termsError.classList.add(classes$h.expanded);
         } else {
-          termsError.classList.remove(classes$n.expanded);
-          this.cartCheckoutButton.removeAttribute(attributes$i.disabled);
+          termsError.classList.remove(classes$h.expanded);
+          this.cartCheckoutButton.removeAttribute(attributes$d.disabled);
         }
       }
 
@@ -1457,12 +1798,12 @@
        */
 
       formErrorsEvents(errorContainer) {
-        const buttonErrorClose = errorContainer.querySelector(selectors$s.formCloseError);
+        const buttonErrorClose = errorContainer.querySelector(selectors$k.formCloseError);
         buttonErrorClose?.addEventListener('click', (e) => {
           e.preventDefault();
 
           if (errorContainer) {
-            errorContainer.classList.remove(classes$n.visible);
+            errorContainer.classList.remove(classes$h.visible);
           }
         });
       }
@@ -1481,7 +1822,7 @@
             const element = document.createElement('div');
             element.innerHTML = response;
 
-            const cleanResponse = element.querySelector(selectors$s.apiContent);
+            const cleanResponse = element.querySelector(selectors$k.apiContent);
             this.build(cleanResponse);
           })
           .catch((error) => console.log(error));
@@ -1498,18 +1839,18 @@
 
       addToCart(formData, button) {
         if (this.cart) {
-          this.cart.classList.add(classes$n.loading);
+          this.cart.classList.add(classes$h.loading);
         }
 
-        const quickAddHolder = button?.closest(selectors$s.quickAddHolder);
+        const quickAddHolder = button?.closest(selectors$k.quickAddHolder);
 
         if (button) {
-          button.classList.add(classes$n.loading);
+          button.classList.add(classes$h.loading);
           button.disabled = true;
         }
 
         if (quickAddHolder) {
-          quickAddHolder.classList.add(classes$n.visible);
+          quickAddHolder.classList.add(classes$h.visible);
         }
 
         fetch(theme.routes.cart_add_url, {
@@ -1520,23 +1861,25 @@
           },
           body: formData,
         })
-          .then((response) => response.json())
+          .then((response) => {
+            return response.json();
+          })
           .then((response) => {
             if (response.status) {
               this.addToCartError(response, button);
 
               if (button) {
-                button.classList.remove(classes$n.loading);
+                button.classList.remove(classes$h.loading);
                 button.disabled = false;
               }
 
-              return;
+              if (!this.showCannotAddMoreInCart) return;
             }
 
             if (this.cart) {
               if (button) {
-                button.classList.remove(classes$n.loading);
-                button.classList.add(classes$n.added);
+                button.classList.remove(classes$h.loading);
+                button.classList.add(classes$h.added);
 
                 button.dispatchEvent(
                   new CustomEvent('theme:product:add', {
@@ -1556,6 +1899,12 @@
               // Redirect to cart page if "Add to cart" is successful
               window.location = theme.routes.cart_url;
             }
+
+            publish(theme.PUB_SUB_EVENTS.cartUpdate, {
+              source: 'product-form',
+              productVariantId: formData.get('id'),
+              cartData: response,
+            });
           })
           .catch((error) => {
             this.addToCartError(error, button);
@@ -1572,21 +1921,21 @@
        */
 
       updateCart(updateData = {}, currentItem = null) {
-        this.cart.classList.add(classes$n.loading);
+        this.cart.classList.add(classes$h.loading);
 
         let updatedQuantity = updateData.quantity;
         if (currentItem !== null) {
           if (updatedQuantity) {
-            currentItem.classList.add(classes$n.loading);
+            currentItem.classList.add(classes$h.loading);
           } else {
-            currentItem.classList.add(classes$n.removed);
+            currentItem.classList.add(classes$h.removed);
           }
         }
         this.disableCartButtons();
 
-        const newItem = this.cart.querySelector(`[${attributes$i.item}="${updateData.id}"]`) || currentItem;
-        const lineIndex = newItem?.hasAttribute(attributes$i.itemIndex) ? parseInt(newItem.getAttribute(attributes$i.itemIndex)) : 0;
-        const itemTitle = newItem?.hasAttribute(attributes$i.itemTitle) ? newItem.getAttribute(attributes$i.itemTitle) : null;
+        const newItem = this.cart.querySelector(`[${attributes$d.item}="${updateData.id}"]`) || currentItem;
+        const lineIndex = newItem?.hasAttribute(attributes$d.itemIndex) ? parseInt(newItem.getAttribute(attributes$d.itemIndex)) : 0;
+        const itemTitle = newItem?.hasAttribute(attributes$d.itemTitle) ? newItem.getAttribute(attributes$d.itemTitle) : null;
 
         if (lineIndex === 0) return;
 
@@ -1612,6 +1961,7 @@
               this.toggleErrorMessage();
               this.resetLineItem(currentItem);
               this.enableCartButtons();
+              this.bindDiscountEventListeners();
 
               return;
             }
@@ -1630,10 +1980,10 @@
        * @return  {Void}
        */
       resetLineItem(item) {
-        const qtyInput = item.querySelector(selectors$s.qtyInput);
+        const qtyInput = item.querySelector(selectors$k.qtyInput);
         const qty = qtyInput.getAttribute('value');
         qtyInput.value = qty;
-        item.classList.remove(classes$n.loading);
+        item.classList.remove(classes$h.loading);
       }
 
       /**
@@ -1643,11 +1993,11 @@
        */
       disableCartButtons() {
         const inputs = this.cart.querySelectorAll('input');
-        const buttons = this.cart.querySelectorAll(`button, ${selectors$s.cartItemRemove}`);
+        const buttons = this.cart.querySelectorAll(`button, ${selectors$k.cartItemRemove}`);
 
         if (inputs.length) {
           inputs.forEach((item) => {
-            item.classList.add(classes$n.disabled);
+            item.classList.add(classes$h.disabled);
             item.blur();
             item.disabled = true;
           });
@@ -1655,7 +2005,7 @@
 
         if (buttons.length) {
           buttons.forEach((item) => {
-            item.setAttribute(attributes$i.disabled, true);
+            item.setAttribute(attributes$d.disabled, true);
           });
         }
       }
@@ -1667,22 +2017,22 @@
        */
       enableCartButtons() {
         const inputs = this.cart.querySelectorAll('input');
-        const buttons = this.cart.querySelectorAll(`button, ${selectors$s.cartItemRemove}`);
+        const buttons = this.cart.querySelectorAll(`button, ${selectors$k.cartItemRemove}`);
 
         if (inputs.length) {
           inputs.forEach((item) => {
-            item.classList.remove(classes$n.disabled);
+            item.classList.remove(classes$h.disabled);
             item.disabled = false;
           });
         }
 
         if (buttons.length) {
           buttons.forEach((item) => {
-            item.removeAttribute(attributes$i.disabled);
+            item.removeAttribute(attributes$d.disabled);
           });
         }
 
-        this.cart.classList.remove(classes$n.loading);
+        this.cart.classList.remove(classes$h.loading);
       }
 
       /**
@@ -1694,7 +2044,7 @@
        */
 
       updateErrorText(itemTitle) {
-        this.cartErrorHolder.querySelector(selectors$s.errorMessage).innerText = itemTitle;
+        this.cartErrorHolder.querySelector(selectors$k.errorMessage).innerText = itemTitle;
       }
 
       /**
@@ -1706,9 +2056,10 @@
       toggleErrorMessage() {
         if (!this.cartErrorHolder) return;
 
-        this.cartErrorHolder.classList.toggle(classes$n.expanded, this.cartUpdateFailed);
+        this.cartErrorHolder.classList.toggle(classes$h.expanded, this.cartUpdateFailed || this.showCannotAddMoreInCart);
 
         // Reset cart error events flag
+        this.showCannotAddMoreInCart = false;
         this.cartUpdateFailed = false;
       }
 
@@ -1743,14 +2094,26 @@
        * @return  {Void}
        */
 
-      addToCartError(data, button) {
-        if (button !== null) {
-          const outerContainer = button.closest(selectors$s.outerSection) || button.closest(selectors$s.quickAddHolder) || button.closest(selectors$s.quickAddModal);
-          let errorContainer = outerContainer?.querySelector(selectors$s.formErrorsContainer);
-          const buttonUpsellHolder = button.closest(selectors$s.quickAddHolder);
+      /**
+       * Hide error message container as soon as an item is successfully added to the cart
+       */
+      hideAddToCartErrorMessage() {
+        const holder = this.button.closest(selectors$k.upsellHolder) ? this.button.closest(selectors$k.upsellHolder) : this.button.closest(selectors$k.productForm);
+        const errorContainer = holder?.querySelector(selectors$k.formErrorsContainer);
 
-          if (buttonUpsellHolder && buttonUpsellHolder.querySelector(selectors$s.formErrorsContainer)) {
-            errorContainer = buttonUpsellHolder.querySelector(selectors$s.formErrorsContainer);
+        errorContainer?.classList.remove(classes$h.visible);
+      }
+
+      addToCartError(data, button) {
+        if (this.showCannotAddMoreInCart) return; // Show error in cart drawer instead of product form
+
+        if (button !== null) {
+          const outerContainer = button.closest(selectors$k.outerSection) || button.closest(selectors$k.quickAddHolder) || button.closest(selectors$k.quickAddModal);
+          let errorContainer = outerContainer?.querySelector(selectors$k.formErrorsContainer);
+          const buttonUpsellHolder = button.closest(selectors$k.quickAddHolder);
+
+          if (buttonUpsellHolder && buttonUpsellHolder.querySelector(selectors$k.formErrorsContainer)) {
+            errorContainer = buttonUpsellHolder.querySelector(selectors$k.formErrorsContainer);
           }
 
           if (errorContainer) {
@@ -1761,7 +2124,7 @@
             }
 
             errorContainer.innerHTML = `<div class="errors">${errorMessage}<button type="button" class="errors__close" data-close-error><svg aria-hidden="true" focusable="false" role="presentation" width="24px" height="24px" stroke-width="1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor" class="icon icon-cancel"><path d="M6.758 17.243L12.001 12m5.243-5.243L12 12m0 0L6.758 6.757M12.001 12l5.243 5.243" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div>`;
-            errorContainer.classList.add(classes$n.visible);
+            errorContainer.classList.add(classes$h.visible);
             this.formErrorsEvents(errorContainer);
           }
 
@@ -1776,7 +2139,7 @@
           );
         }
 
-        const quickAddHolder = button?.closest(selectors$s.quickAddHolder);
+        const quickAddHolder = button?.closest(selectors$k.quickAddHolder);
 
         if (quickAddHolder) {
           quickAddHolder.dispatchEvent(
@@ -1791,7 +2154,7 @@
           );
         }
 
-        this.cart?.classList.remove(classes$n.loading);
+        this.cart?.classList.remove(classes$h.loading);
       }
 
       /**
@@ -1804,34 +2167,34 @@
         let quickAddHolder = null;
         const hasError = event.type == 'theme:product:add-error';
         const buttonATC = event.detail.button;
-        const cartBarButtonATC = document.querySelector(selectors$s.cartBarAdd);
+        const cartBarButtonATC = document.querySelector(selectors$k.cartBarAdd);
 
         buttons.push(buttonATC);
-        quickAddHolder = buttonATC.closest(selectors$s.quickAddHolder);
+        quickAddHolder = buttonATC.closest(selectors$k.quickAddHolder);
 
         if (cartBarButtonATC) {
           buttons.push(cartBarButtonATC);
         }
 
         buttons.forEach((button) => {
-          button.classList.remove(classes$n.loading);
+          button.classList.remove(classes$h.loading);
           if (!hasError) {
-            button.classList.add(classes$n.added);
+            button.classList.add(classes$h.added);
           }
         });
 
         setTimeout(() => {
           buttons.forEach((button) => {
-            button.classList.remove(classes$n.added);
+            button.classList.remove(classes$h.added);
             const isVariantUnavailable =
-              button.closest(selectors$s.formWrapper)?.classList.contains(classes$n.variantSoldOut) || button.closest(selectors$s.formWrapper)?.classList.contains(classes$n.variantUnavailable);
+              button.closest(selectors$k.formWrapper)?.classList.contains(classes$h.variantSoldOut) || button.closest(selectors$k.formWrapper)?.classList.contains(classes$h.variantUnavailable);
 
             if (!isVariantUnavailable) {
               button.disabled = false;
             }
           });
 
-          quickAddHolder?.classList.remove(classes$n.visible);
+          quickAddHolder?.classList.remove(classes$h.visible);
         }, 1000);
       }
 
@@ -1844,12 +2207,12 @@
       toggleClassesOnContainers() {
         const hasItemsInCart = this.hasItemsInCart();
 
-        this.cart.classList.toggle(classes$n.empty, !hasItemsInCart);
+        this.cart.classList.toggle(classes$h.empty, !hasItemsInCart);
 
         if (!hasItemsInCart && this.cartDrawer) {
           setTimeout(() => {
             this.a11y.trapFocus(this.cartDrawer, {
-              elementToFocus: this.cartDrawer.querySelector(selectors$s.cartDrawerClose),
+              elementToFocus: this.cartDrawer.querySelector(selectors$k.cartDrawerClose),
             });
           }, 100);
         }
@@ -1864,11 +2227,13 @@
        */
 
       build(data) {
-        const cartItemsData = data.querySelector(selectors$s.apiLineItems);
-        const upsellItemsData = data.querySelector(selectors$s.apiUpsellItems);
-        const cartEmptyData = Boolean(cartItemsData === null && upsellItemsData === null);
-        const priceData = data.querySelector(selectors$s.apiCartPrice);
-        const cartTotal = data.querySelector(selectors$s.cartTotal);
+        const cartItemsData = data.querySelector(selectors$k.apiLineItems);
+        const upsellItemsData = data.querySelector(selectors$k.apiUpsellItems);
+        const bundleItemsData = data.querySelector(selectors$k.apiBundleItems);
+
+        const cartEmptyData = Boolean(cartItemsData === null && upsellItemsData === null && bundleItemsData === null);
+        const priceData = data.querySelector(selectors$k.apiCartPrice);
+        const cartTotal = data.querySelector(selectors$k.cartTotal);
 
         if (this.priceHolder && priceData) {
           this.priceHolder.innerHTML = priceData.innerHTML;
@@ -1880,6 +2245,10 @@
           if (this.upsellProductsHolder) {
             this.upsellProductsHolder.innerHTML = '';
           }
+
+          if (this.bundleProductsHolder) {
+            this.bundleProductsHolder.innerHTML = '';
+          }
         } else {
           this.itemsHolder.innerHTML = cartItemsData.innerHTML;
 
@@ -1887,13 +2256,17 @@
             this.upsellProductsHolder.innerHTML = upsellItemsData.innerHTML;
           }
 
-          this.skipUpsellProductEvent();
-          this.checkSkippedUpsellProductsFromStorage();
-          this.toggleCartUpsellWidgetVisibility();
+          if (this.bundleProductsHolder) {
+            this.bundleProductsHolder.innerHTML = bundleItemsData.innerHTML;
+          }
+
+          this.skipUpsellOrBundleProductEvent();
+          this.checkSkippedUpsellOrBundleProductsFromStorage();
+          this.toggleCartUpsellOrBundleWidgetVisibility();
         }
 
-        this.newTotalItems = cartItemsData && cartItemsData.querySelectorAll(selectors$s.item).length ? cartItemsData.querySelectorAll(selectors$s.item).length : 0;
-        this.subtotal = cartTotal && cartTotal.hasAttribute(attributes$i.cartTotal) ? parseInt(cartTotal.getAttribute(attributes$i.cartTotal)) : 0;
+        this.newTotalItems = cartItemsData && cartItemsData.querySelectorAll(selectors$k.item).length ? cartItemsData.querySelectorAll(selectors$k.item).length : 0;
+        this.subtotal = cartTotal && cartTotal.hasAttribute(attributes$d.cartTotal) ? parseInt(cartTotal.getAttribute(attributes$d.cartTotal)) : 0;
         this.cartCount = this.getCartItemCount();
 
         document.dispatchEvent(
@@ -1915,18 +2288,31 @@
         }
 
         // Add class "is-updated" line items holder to reduce cart items animation delay via CSS variables
-        if (this.cartDrawer?.classList.contains(classes$n.open)) {
-          this.cart.classList.add(classes$n.updated);
+        if (this.cartDrawer?.classList.contains(classes$h.open)) {
+          this.cart.classList.add(classes$h.updated);
         }
 
         // Remove cart loading class
-        this.cart.classList.remove(classes$n.loading);
+        this.cart.classList.remove(classes$h.loading);
 
         // Prepare empty cart buttons for animation
         if (!this.hasItemsInCart()) {
-          this.cartEmpty.querySelectorAll(selectors$s.animation).forEach((item) => {
-            item.classList.remove(classes$n.animated);
+          this.cartEmpty.querySelectorAll(selectors$k.animation).forEach((item) => {
+            item.classList.remove(classes$h.animated);
           });
+        }
+
+        if (this.hasDiscountBlock) {
+          if (this.discountField) {
+            this.discountField.value = this.existingDiscountCodes.join(',');
+          }
+
+          if (this.discountError) {
+            this.discountErrorMessage.textContent = window.theme.strings.discount_not_applicable;
+            this.discountErrorMessage.classList.remove('hidden');
+          } else {
+            this.discountErrorMessage.classList.add('hidden');
+          }
         }
 
         this.freeShippingMessageHandle(this.subtotal);
@@ -1936,6 +2322,7 @@
         this.enableCartButtons();
         this.updateProgress();
         this.animateItems();
+        this.bindDiscountEventListeners();
 
         document.dispatchEvent(
           new CustomEvent('theme:product:added', {
@@ -1951,7 +2338,7 @@
        */
 
       getCartItemCount() {
-        return Array.from(this.cart.querySelectorAll(selectors$s.qtyInput)).reduce((total, quantityInput) => total + parseInt(quantityInput.value), 0);
+        return Array.from(this.cart.querySelectorAll(selectors$k.qtyInput)).reduce((total, quantityInput) => total + parseInt(quantityInput.value), 0);
       }
 
       /**
@@ -1976,8 +2363,8 @@
         if (!this.freeShipping.length) return;
 
         this.freeShipping.forEach((message) => {
-          const hasQualifiedShippingMessage = message.hasAttribute(attributes$i.freeShipping) && message.getAttribute(attributes$i.freeShipping) === 'true' && total >= 0;
-          message.classList.toggle(classes$n.success, hasQualifiedShippingMessage && total >= this.freeShippingLimit);
+          const hasQualifiedShippingMessage = message.hasAttribute(attributes$d.freeShipping) && message.getAttribute(attributes$d.freeShipping) === 'true' && total >= 0;
+          message.classList.toggle(classes$h.success, hasQualifiedShippingMessage && total >= this.freeShippingLimit);
         });
       }
 
@@ -1988,7 +2375,7 @@
        */
 
       updateProgress() {
-        this.freeShipping = document.querySelectorAll(selectors$s.freeShipping);
+        this.freeShipping = document.querySelectorAll(selectors$k.freeShipping);
 
         if (!this.freeShipping.length) return;
 
@@ -1998,9 +2385,9 @@
         const leftToSpend = window.theme.formatMoney(this.freeShippingLimit - this.subtotal, theme.moneyFormat);
 
         this.freeShipping.forEach((item) => {
-          const progressBar = item.querySelector(selectors$s.freeShippingProgress);
-          const progressGraph = item.querySelector(selectors$s.freeShippingGraph);
-          const leftToSpendMessage = item.querySelector(selectors$s.leftToSpend);
+          const progressBar = item.querySelector(selectors$k.freeShippingProgress);
+          const progressGraph = item.querySelector(selectors$k.freeShippingGraph);
+          const leftToSpendMessage = item.querySelector(selectors$k.leftToSpend);
 
           if (leftToSpendMessage) {
             leftToSpendMessage.innerHTML = leftToSpend.replace('.00', '');
@@ -2019,86 +2406,108 @@
       }
 
       /**
-       * Skip upsell product
+       * Skip upsell or bundle product
        */
-      skipUpsellProductEvent() {
-        if (this.upsellProductsHolder === null) {
+      skipUpsellOrBundleProductEvent() {
+        if (this.upsellProductsHolder === null && this.bundleProductsHolder === null) {
           return;
         }
-        const skipButtons = this.upsellProductsHolder.querySelectorAll(selectors$s.buttonSkipUpsellProduct);
 
-        if (skipButtons.length) {
-          skipButtons.forEach((button) => {
+        const upsellSkipButtons = this.upsellProductsHolder?.querySelectorAll(selectors$k.buttonSkipUpsellProduct) || [];
+        const bundleSkipButtons = this.bundleProductsHolder?.querySelectorAll(selectors$k.buttonSkipUpsellProduct) || [];
+        const allSkipButtons = [...upsellSkipButtons, ...bundleSkipButtons];
+
+        if (allSkipButtons.length) {
+          allSkipButtons.forEach((button) => {
             button.addEventListener('click', (event) => {
               event.preventDefault();
-              const productID = button.closest(selectors$s.quickAddHolder).getAttribute(attributes$i.quickAddHolder);
 
-              if (!this.skipUpsellProductsArray.includes(productID)) {
+              const productID = button.closest(selectors$k.quickAddHolder).getAttribute(attributes$d.quickAddHolder);
+              const isUpsell = !!button.closest(selectors$k.upsellWidget);
+              const isBundle = !!button.closest(selectors$k.bundleWidget);
+
+              if (isUpsell && !this.skipUpsellProductsArray.includes(productID)) {
                 this.skipUpsellProductsArray.push(productID);
+                window.sessionStorage.setItem('skip_upsell_products', this.skipUpsellProductsArray);
+                this.removeUpsellOrBundleProduct(productID, 'upsell');
               }
 
-              // Add skipped upsell product to session storage
-              window.sessionStorage.setItem('skip_upsell_products', this.skipUpsellProductsArray);
+              if (isBundle && !this.skipBundleProductsArray.includes(productID)) {
+                this.skipBundleProductsArray.push(productID);
+                window.sessionStorage.setItem('skip_bundle_products', this.skipBundleProductsArray);
+                this.removeUpsellOrBundleProduct(productID, 'bundle');
+              }
 
-              // Remove upsell product from cart
-              this.removeUpsellProduct(productID);
-              this.toggleCartUpsellWidgetVisibility();
+              this.toggleCartUpsellOrBundleWidgetVisibility();
             });
           });
         }
       }
 
       /**
-       * Check for skipped upsell product added to session storage
+       * Check for skipped upsell or bundle product added to session storage
        */
-      checkSkippedUpsellProductsFromStorage() {
-        const skippedUpsellItemsFromStorage = window.sessionStorage.getItem('skip_upsell_products');
-        if (!skippedUpsellItemsFromStorage) return;
+      checkSkippedUpsellOrBundleProductsFromStorage() {
+        const types = [
+          {key: 'upsell', storageKey: 'skip_upsell_products', array: this.skipUpsellProductsArray},
+          {key: 'bundle', storageKey: 'skip_bundle_products', array: this.skipBundleProductsArray},
+        ];
 
-        const skippedUpsellItemsFromStorageArray = skippedUpsellItemsFromStorage.split(',');
-
-        skippedUpsellItemsFromStorageArray.forEach((productID) => {
-          if (!this.skipUpsellProductsArray.includes(productID)) {
-            this.skipUpsellProductsArray.push(productID);
+        types.forEach(({key, storageKey, array}) => {
+          const skippedItems = window.sessionStorage.getItem(storageKey);
+          if (skippedItems) {
+            skippedItems.split(',').forEach((productID) => {
+              if (!array.includes(productID)) {
+                array.push(productID);
+              }
+              this.removeUpsellOrBundleProduct(productID, key);
+            });
           }
-
-          this.removeUpsellProduct(productID);
         });
       }
 
-      removeUpsellProduct(productID) {
-        if (!this.upsellProductsHolder) return;
+      removeUpsellOrBundleProduct(productID, type = 'upsell') {
+        const holders = {
+          upsell: this.upsellProductsHolder,
+          bundle: this.bundleProductsHolder,
+        };
+        const holder = holders[type];
+        if (!holder) return;
 
-        // Remove skipped upsell product from Cart
-        const upsellProduct = this.upsellProductsHolder.querySelector(`[${attributes$i.quickAddHolder}="${productID}"]`);
-
-        if (upsellProduct) {
-          upsellProduct.parentNode.remove();
+        const product = holder.querySelector(`[${attributes$d.quickAddHolder}="${productID}"]`);
+        if (product && product.parentNode) {
+          product.parentNode.remove();
         }
       }
 
       /**
-       * Show or hide cart upsell products widget visibility
+       * Show or hide cart upsell or bundle products widget visibility
        */
-      toggleCartUpsellWidgetVisibility() {
-        if (!this.upsellProductsHolder) return;
+      toggleCartUpsellOrBundleWidgetVisibility() {
+        if (!this.upsellProductsHolder && !this.bundleProductsHolder) return;
 
-        // Hide upsell container if no items
-        const upsellItems = this.upsellProductsHolder.querySelectorAll(selectors$s.quickAddHolder);
-        const upsellWidget = this.upsellProductsHolder.closest(selectors$s.upsellWidget);
+        const upsellItems = this.upsellProductsHolder?.querySelectorAll(selectors$k.quickAddHolder);
+        const bundleItems = this.bundleProductsHolder?.querySelectorAll(selectors$k.quickAddHolder);
+        const upsellWidget = this.upsellProductsHolder?.closest(selectors$k.upsellWidget);
+        const bundleWidget = this.bundleProductsHolder?.closest(selectors$k.bundleWidget);
 
-        if (!upsellWidget) return;
+        if (!upsellWidget && !bundleWidget) return;
 
-        upsellWidget.classList.toggle(classes$n.hidden, !upsellItems.length);
-
-        if (upsellItems.length && !upsellWidget.hasAttribute(attributes$i.open) && upsellWidget.hasAttribute(attributes$i.upsellAutoOpen)) {
-          upsellWidget.setAttribute(attributes$i.open, true);
-          const upsellWidgetBody = upsellWidget.querySelector(selectors$s.collapsibleBody);
-
-          if (upsellWidgetBody) {
-            upsellWidgetBody.style.height = 'auto';
+        // Helper to toggle and auto-open widget
+        const toggleWidget = (widget, items, autoOpenAttr) => {
+          if (!widget) return;
+          widget.classList.toggle(classes$h.hidden, !items.length);
+          if (items.length && !widget.hasAttribute(attributes$d.open) && widget.hasAttribute(autoOpenAttr)) {
+            widget.setAttribute(attributes$d.open, true);
+            const widgetBody = widget.querySelector(selectors$k.collapsibleBody);
+            if (widgetBody) {
+              widgetBody.style.height = 'auto';
+            }
           }
-        }
+        };
+
+        toggleWidget(upsellWidget, upsellItems, attributes$d.upsellAutoOpen);
+        toggleWidget(bundleWidget, bundleItems, attributes$d.upsellAutoOpen);
       }
 
       /**
@@ -2107,9 +2516,9 @@
        * @return  {Void}
        */
       resetAnimatedItems() {
-        this.cart.querySelectorAll(selectors$s.animation).forEach((item) => {
-          item.classList.remove(classes$n.animated);
-          item.classList.remove(classes$n.hiding);
+        this.cart.querySelectorAll(selectors$k.animation).forEach((item) => {
+          item.classList.remove(classes$h.animated);
+          item.classList.remove(classes$h.hiding);
         });
       }
 
@@ -2126,8 +2535,8 @@
             cart = e.detail.target;
           }
 
-          cart?.querySelectorAll(selectors$s.animation).forEach((item) => {
-            item.classList.add(classes$n.animated);
+          cart?.querySelectorAll(selectors$k.animation).forEach((item) => {
+            item.classList.add(classes$h.animated);
           });
         });
       }
@@ -2137,7 +2546,7 @@
       customElements.define('cart-items', CartItems);
     }
 
-    const attributes$h = {
+    const attributes$c = {
       count: 'data-cart-count',
       limit: 'data-limit',
     };
@@ -2147,7 +2556,7 @@
         super();
 
         this.cartCount = null;
-        this.limit = this.getAttribute(attributes$h.limit);
+        this.limit = this.getAttribute(attributes$c.limit);
         this.onCartChangeCallback = this.onCartChange.bind(this);
       }
 
@@ -2166,7 +2575,7 @@
 
       update() {
         if (this.cartCount !== null) {
-          this.setAttribute(attributes$h.count, this.cartCount);
+          this.setAttribute(attributes$c.count, this.cartCount);
           let countValue = this.cartCount;
 
           if (this.limit && this.cartCount >= this.limit) {
@@ -2182,22 +2591,22 @@
       customElements.define('cart-count', CartCount);
     }
 
-    const classes$m = {
+    const classes$g = {
       open: 'is-open',
       closing: 'is-closing',
       duplicate: 'drawer--duplicate',
       drawerEditorError: 'drawer-editor-error',
     };
 
-    const selectors$r = {
+    const selectors$j = {
+      additionalCheckoutButtons: '.additional-checkout-buttons',
       cartDrawer: 'cart-drawer',
       cartDrawerClose: '[data-cart-drawer-close]',
-      cartDrawerSection: '[data-section-type="cart-drawer"]',
       cartDrawerInner: '[data-cart-drawer-inner]',
       shopifySection: '.shopify-section',
     };
 
-    const attributes$g = {
+    const attributes$b = {
       drawerUnderlay: 'data-drawer-underlay',
     };
 
@@ -2207,22 +2616,22 @@
 
         this.cartDrawerIsOpen = false;
 
-        this.cartDrawerClose = this.querySelector(selectors$r.cartDrawerClose);
-        this.cartDrawerInner = this.querySelector(selectors$r.cartDrawerInner);
+        this.cartDrawerClose = this.querySelector(selectors$j.cartDrawerClose);
+        this.cartDrawerInner = this.querySelector(selectors$j.cartDrawerInner);
         this.openCartDrawer = this.openCartDrawer.bind(this);
         this.closeCartDrawer = this.closeCartDrawer.bind(this);
         this.toggleCartDrawer = this.toggleCartDrawer.bind(this);
         this.openCartDrawerOnProductAdded = this.openCartDrawerOnProductAdded.bind(this);
         this.openCartDrawerOnSelect = this.openCartDrawerOnSelect.bind(this);
         this.closeCartDrawerOnDeselect = this.closeCartDrawerOnDeselect.bind(this);
-        this.cartDrawerSection = this.closest(selectors$r.shopifySection);
+        this.cartDrawerSection = this.closest(selectors$j.shopifySection);
         this.a11y = window.theme.a11y;
 
         this.closeCartEvents();
       }
 
       connectedCallback() {
-        const drawerSection = this.closest(selectors$r.shopifySection);
+        const drawerSection = this.closest(selectors$j.shopifySection);
 
         /* Prevent duplicated cart drawers */
         if (window.theme.hasCartDrawer) {
@@ -2231,14 +2640,14 @@
             return;
           } else {
             const errorMessage = document.createElement('div');
-            errorMessage.classList.add(classes$m.drawerEditorError);
+            errorMessage.classList.add(classes$g.drawerEditorError);
             errorMessage.innerText = 'Cart drawer section already exists.';
 
-            if (!this.querySelector(`.${classes$m.drawerEditorError}`)) {
-              this.querySelector(selectors$r.cartDrawerInner).append(errorMessage);
+            if (!this.querySelector(`.${classes$g.drawerEditorError}`)) {
+              this.querySelector(selectors$j.cartDrawerInner).append(errorMessage);
             }
 
-            this.classList.add(classes$m.duplicate);
+            this.classList.add(classes$g.duplicate);
           }
         }
 
@@ -2261,7 +2670,7 @@
         document.removeEventListener('shopify:section:select', this.openCartDrawerOnSelect);
         document.removeEventListener('shopify:section:deselect', this.closeCartDrawerOnDeselect);
 
-        if (document.querySelectorAll(selectors$r.cartDrawer).length <= 1) {
+        if (document.querySelectorAll(selectors$j.cartDrawer).length <= 1) {
           window.theme.hasCartDrawer = false;
         }
 
@@ -2285,7 +2694,7 @@
        * @return  {Void}
        */
       openCartDrawerOnSelect(e) {
-        const cartDrawerSection = e.target.querySelector(selectors$r.shopifySection) || e.target.closest(selectors$r.shopifySection) || e.target;
+        const cartDrawerSection = e.target.querySelector(selectors$j.shopifySection) || e.target.closest(selectors$j.shopifySection) || e.target;
 
         if (cartDrawerSection === this.cartDrawerSection) {
           this.openCartDrawer(true);
@@ -2310,7 +2719,7 @@
        */
 
       openCartDrawer(forceOpen = false) {
-        if (!forceOpen && this.classList.contains(classes$m.duplicate)) return;
+        if (!forceOpen && this.classList.contains(classes$g.duplicate)) return;
 
         this.cartDrawerIsOpen = true;
         this.onBodyClickEvent = this.onBodyClickEvent || this.onBodyClick.bind(this);
@@ -2326,14 +2735,14 @@
         );
         document.dispatchEvent(new CustomEvent('theme:scroll:lock', {bubbles: true}));
 
-        this.classList.add(classes$m.open);
+        this.classList.add(classes$g.open);
 
         // Observe Additional Checkout Buttons
         this.observeAdditionalCheckoutButtons();
 
         window.theme.waitForAnimationEnd(this.cartDrawerInner).then(() => {
           this.a11y.trapFocus(this, {
-            elementToFocus: this.querySelector(selectors$r.cartDrawerClose),
+            elementToFocus: this.querySelector(selectors$j.cartDrawerClose),
           });
         });
       }
@@ -2345,10 +2754,10 @@
        */
 
       closeCartDrawer() {
-        if (!this.classList.contains(classes$m.open)) return;
+        if (!this.classList.contains(classes$g.open)) return;
 
-        this.classList.add(classes$m.closing);
-        this.classList.remove(classes$m.open);
+        this.classList.add(classes$g.closing);
+        this.classList.remove(classes$g.open);
 
         this.cartDrawerIsOpen = false;
 
@@ -2365,7 +2774,7 @@
         document.dispatchEvent(new CustomEvent('theme:scroll:unlock', {bubbles: true}));
 
         window.theme.waitForAnimationEnd(this.cartDrawerInner).then(() => {
-          this.classList.remove(classes$m.closing);
+          this.classList.remove(classes$g.closing);
         });
       }
 
@@ -2403,18 +2812,18 @@
       }
 
       onBodyClick(e) {
-        if (e.target.hasAttribute(attributes$g.drawerUnderlay)) this.closeCartDrawer();
+        if (e.target.hasAttribute(attributes$b.drawerUnderlay)) this.closeCartDrawer();
       }
 
       observeAdditionalCheckoutButtons() {
         // identify an element to observe
-        const additionalCheckoutButtons = this.querySelector(selectors$r.additionalCheckoutButtons);
+        const additionalCheckoutButtons = this.querySelector(selectors$j.additionalCheckoutButtons);
         if (additionalCheckoutButtons) {
           // create a new instance of `MutationObserver` named `observer`,
           // passing it a callback function
           const observer = new MutationObserver(() => {
             this.a11y.trapFocus(this, {
-              elementToFocus: this.querySelector(selectors$r.cartDrawerClose),
+              elementToFocus: this.querySelector(selectors$j.cartDrawerClose),
             });
             observer.disconnect();
           });
@@ -2430,80 +2839,74 @@
       customElements.define('cart-drawer', CartDrawer);
     }
 
-    const selectors$q = {
-      collapsible: '[data-collapsible]',
-      trigger: '[data-collapsible-trigger]',
-      body: '[data-collapsible-body]',
-      content: '[data-collapsible-content]',
-    };
-
-    const attributes$f = {
-      desktop: 'desktop',
-      disabled: 'disabled',
-      mobile: 'mobile',
-      open: 'open',
-      single: 'single',
-    };
-
     class CollapsibleElements extends HTMLElement {
       constructor() {
         super();
 
-        this.collapsibles = this.querySelectorAll(selectors$q.collapsible);
-        this.single = this.hasAttribute(attributes$f.single);
+        this.single = this.hasAttribute('single');
         this.toggle = this.toggle.bind(this);
+
+        // Bind event handlers once and store references
+        this.onCollapsibleClickEvent = this.onCollapsibleClick.bind(this);
+        this.onTransitionEndEvent = this.onTransitionEnd.bind(this);
       }
 
       connectedCallback() {
+        // Query fresh DOM elements first
+        this.collapsibles = this.querySelectorAll('[data-collapsible]');
+
         this.toggle();
         document.addEventListener('theme:resize:width', this.toggle);
 
         this.collapsibles.forEach((collapsible) => {
-          const trigger = collapsible.querySelector(selectors$q.trigger);
-          const body = collapsible.querySelector(selectors$q.body);
+          const trigger = collapsible.querySelector('[data-collapsible-trigger]');
+          const body = collapsible.querySelector('[data-collapsible-body]');
 
-          trigger?.addEventListener('click', (event) => this.onCollapsibleClick(event));
+          trigger?.addEventListener('click', this.onCollapsibleClickEvent);
 
-          body?.addEventListener('transitionend', (event) => {
-            if (event.target !== body) return;
-
-            if (collapsible.getAttribute(attributes$f.open) == 'true') {
-              this.setBodyHeight(body, 'auto');
-            }
-
-            if (collapsible.getAttribute(attributes$f.open) == 'false') {
-              collapsible.removeAttribute(attributes$f.open);
-              this.setBodyHeight(body, '');
-            }
-          });
+          body?.addEventListener('transitionend', this.onTransitionEndEvent);
         });
       }
 
       disconnectedCallback() {
         document.removeEventListener('theme:resize:width', this.toggle);
+
+        // Only proceed if collapsibles exist
+        if (this.collapsibles) {
+          this.collapsibles.forEach((collapsible) => {
+            const trigger = collapsible.querySelector('[data-collapsible-trigger]');
+            const body = collapsible.querySelector('[data-collapsible-body]');
+
+            trigger?.removeEventListener('click', this.onCollapsibleClickEvent);
+            body?.removeEventListener('transitionend', this.onTransitionEndEvent);
+          });
+        }
+
+        // Clear the reference
+        this.collapsibles = null;
       }
 
       toggle() {
-        const isDesktopView = !window.theme.isMobile();
+        const isDesktopView = !theme.isMobile;
 
         this.collapsibles.forEach((collapsible) => {
-          if (!collapsible.hasAttribute(attributes$f.desktop) && !collapsible.hasAttribute(attributes$f.mobile)) return;
+          if (!collapsible.hasAttribute('desktop') && !collapsible.hasAttribute('mobile')) return;
 
-          const enableDesktop = collapsible.hasAttribute(attributes$f.desktop) ? collapsible.getAttribute(attributes$f.desktop) : 'true';
-          const enableMobile = collapsible.hasAttribute(attributes$f.mobile) ? collapsible.getAttribute(attributes$f.mobile) : 'true';
+          const enableDesktop = collapsible.hasAttribute('desktop') ? collapsible.getAttribute('desktop') : 'true';
+          const enableMobile = collapsible.hasAttribute('mobile') ? collapsible.getAttribute('mobile') : 'true';
           const isEligible = (isDesktopView && enableDesktop == 'true') || (!isDesktopView && enableMobile == 'true');
-          const body = collapsible.querySelector(selectors$q.body);
+          const body = collapsible.querySelector('[data-collapsible-body]');
 
           if (isEligible) {
-            collapsible.removeAttribute(attributes$f.disabled);
-            collapsible.querySelector(selectors$q.trigger).removeAttribute('tabindex');
-            collapsible.removeAttribute(attributes$f.open);
+            collapsible.removeAttribute('disabled');
+            collapsible.querySelector('[data-collapsible-trigger]').removeAttribute('tabindex');
+            collapsible.removeAttribute('open');
 
             this.setBodyHeight(body, '');
           } else {
-            collapsible.setAttribute(attributes$f.disabled, '');
+            collapsible.setAttribute('disabled', '');
             collapsible.setAttribute('open', true);
-            collapsible.querySelector(selectors$q.trigger).setAttribute('tabindex', -1);
+            collapsible.querySelector('[data-collapsible-trigger]').setAttribute('tabindex', -1);
           }
         });
       }
@@ -2511,8 +2914,8 @@
       open(collapsible) {
         if (collapsible.getAttribute('open') == 'true') return;
 
-        const body = collapsible.querySelector(selectors$q.body);
-        const content = collapsible.querySelector(selectors$q.content);
+        const body = collapsible.querySelector('[data-collapsible-body]');
+        const content = collapsible.querySelector('[data-collapsible-content]');
 
         collapsible.setAttribute('open', true);
 
@@ -2522,8 +2925,8 @@
       close(collapsible) {
         if (!collapsible.hasAttribute('open')) return;
 
-        const body = collapsible.querySelector(selectors$q.body);
-        const content = collapsible.querySelector(selectors$q.content);
+        const body = collapsible.querySelector('[data-collapsible-body]');
+        const content = collapsible.querySelector('[data-collapsible-content]');
 
         this.setBodyHeight(body, content.offsetHeight);
 
@@ -2540,17 +2943,34 @@
         body.style.height = contentHeight !== 'auto' && contentHeight !== '' ? `${contentHeight}px` : contentHeight;
       }
 
+      onTransitionEnd(event) {
+        const target = event.target;
+        const collapsible = target.closest('[data-collapsible]');
+        const body = collapsible.querySelector('[data-collapsible-body]');
+
+        if (target !== body || !collapsible) return;
+
+        if (collapsible.getAttribute('open') == 'true') {
+          this.setBodyHeight(body, 'auto');
+        }
+
+        if (collapsible.getAttribute('open') == 'false') {
+          collapsible.removeAttribute('open');
+          this.setBodyHeight(body, '');
+        }
+      }
+
       onCollapsibleClick(event) {
         event.preventDefault();
 
         const trigger = event.target;
-        const collapsible = trigger.closest(selectors$q.collapsible);
+        const collapsible = trigger.closest('[data-collapsible]');
 
         // When we want only one item expanded at the same time
         if (this.single) {
           this.collapsibles.forEach((otherCollapsible) => {
             // if otherCollapsible has attribute open and it's not the one we clicked on, remove the open attribute
-            if (otherCollapsible.hasAttribute(attributes$f.open) && otherCollapsible != collapsible) {
+            if (otherCollapsible.hasAttribute('open') && otherCollapsible != collapsible) {
               requestAnimationFrame(() => {
                 this.close(otherCollapsible);
               });
@@ -2558,7 +2978,7 @@
           });
         }
 
-        if (collapsible.hasAttribute(attributes$f.open)) {
+        if (collapsible.hasAttribute('open')) {
           this.close(collapsible);
         } else {
           this.open(collapsible);
@@ -2584,58 +3004,29 @@
       customElements.define('collapsible-elements', CollapsibleElements);
     }
 
-    const selectors$p = {
-      deferredMediaButton: '[data-deferred-media-button]',
-      media: 'video, model-viewer, iframe',
-      youtube: '[data-host="youtube"]',
-      vimeo: '[data-host="vimeo"]',
-      template: 'template',
-      video: 'video',
-      productModel: 'product-model',
-    };
-
-    const attributes$e = {
-      loaded: 'loaded',
-      autoplay: 'autoplay',
-    };
-
     class DeferredMedia extends HTMLElement {
       constructor() {
         super();
 
-        const poster = this.querySelector(selectors$p.deferredMediaButton);
+        const poster = this.querySelector('[data-deferred-media-button]');
         poster?.addEventListener('click', this.loadContent.bind(this));
       }
 
       loadContent(focus = true) {
-        this.pauseAllMedia();
+        window.theme.pauseAllMedia();
 
-        if (!this.getAttribute(attributes$e.loaded)) {
+        if (!this.getAttribute('loaded')) {
           const content = document.createElement('div');
-          const templateContent = this.querySelector(selectors$p.template).content.firstElementChild.cloneNode(true);
-          content.appendChild(templateContent);
-          this.setAttribute(attributes$e.loaded, true);
+          content.appendChild(this.querySelector('template').content.firstElementChild.cloneNode(true));
+          this.setAttribute('loaded', true);
 
-          const mediaElement = this.appendChild(content.querySelector(selectors$p.media));
+          const mediaElement = this.appendChild(content.querySelector('video, model-viewer, iframe'));
           if (focus) mediaElement.focus();
-          if (mediaElement.nodeName == 'VIDEO' && mediaElement.getAttribute(attributes$e.autoplay)) {
+          if (mediaElement.nodeName == 'VIDEO' && mediaElement.getAttribute('autoplay')) {
             // Force autoplay on Safari browsers
             mediaElement.play();
           }
         }
-      }
-
-      pauseAllMedia() {
-        document.querySelectorAll(selectors$p.youtube).forEach((video) => {
-          video.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        });
-        document.querySelectorAll(selectors$p.vimeo).forEach((video) => {
-          video.contentWindow.postMessage('{"method":"pause"}', '*');
-        });
-        document.querySelectorAll(selectors$p.video).forEach((video) => video.pause());
-        document.querySelectorAll(selectors$p.productModel).forEach((model) => {
-          if (model.modelViewerUI) model.modelViewerUI.pause();
-        });
       }
     }
 
@@ -2650,7 +3041,7 @@
       Used for sections with horizontal sliders built by native scrolling
     */
 
-    const classes$l = {
+    const classes$f = {
       visible: 'is-visible',
     };
 
@@ -2674,9 +3065,9 @@
         this.observer = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (entry.intersectionRatio >= 0.99) {
-              entry.target.classList.add(classes$l.visible);
+              entry.target.classList.add(classes$f.visible);
             } else {
-              entry.target.classList.remove(classes$l.visible);
+              entry.target.classList.remove(classes$f.visible);
             }
           });
         }, options);
@@ -2691,14 +3082,14 @@
       }
     }
 
-    const classes$k = {
+    const classes$e = {
       dragging: 'is-dragging',
       enabled: 'is-enabled',
       scrolling: 'is-scrolling',
       visible: 'is-visible',
     };
 
-    const selectors$o = {
+    const selectors$i = {
       image: 'img, svg',
       productImage: '[data-product-image]',
       slide: '[data-grid-item]',
@@ -2730,7 +3121,7 @@
         this.slider.addEventListener('mousemove', this.handleMouseMove);
         this.slider.addEventListener('wheel', this.handleMouseWheel, {passive: true});
 
-        this.slider.classList.add(classes$k.enabled);
+        this.slider.classList.add(classes$e.enabled);
       }
 
       handleMouseDown(e) {
@@ -2762,7 +3153,7 @@
         const prevScrollLeft = this.slider.scrollLeft;
         const direction = walk > 0 ? 1 : -1;
 
-        this.slider.classList.add(classes$k.dragging, classes$k.scrolling);
+        this.slider.classList.add(classes$e.dragging, classes$e.scrolling);
         this.slider.scrollLeft = this.scrollLeft - walk;
 
         if (this.slider.scrollLeft !== prevScrollLeft) {
@@ -2772,12 +3163,12 @@
 
       handleMouseWheel() {
         this.cancelMomentumTracking();
-        this.slider.classList.remove(classes$k.scrolling);
+        this.slider.classList.remove(classes$e.scrolling);
       }
 
       beginMomentumTracking() {
         this.isScrolling = false;
-        this.slider.classList.remove(classes$k.dragging);
+        this.slider.classList.remove(classes$e.dragging);
         this.cancelMomentumTracking();
         this.scrollToSlide();
       }
@@ -2789,7 +3180,7 @@
       scrollToSlide() {
         if (!this.velX && !this.isScrolling) return;
 
-        const slide = this.slider.querySelector(`${selectors$o.slide}.${classes$k.visible}`);
+        const slide = this.slider.querySelector(`${selectors$i.slide}.${classes$e.visible}`);
         if (!slide) return;
 
         const gap = parseInt(window.getComputedStyle(slide).marginRight) || 0;
@@ -2826,7 +3217,7 @@
         if (currentTime < this.duration) {
           this.scrollAnimation = requestAnimationFrame(this.scrollStep);
         } else {
-          this.slider.classList.remove(classes$k.scrolling);
+          this.slider.classList.remove(classes$e.scrolling);
 
           // Reset velocity
           this.velX = 0;
@@ -2841,7 +3232,7 @@
       }
 
       destroy() {
-        this.slider.classList.remove(classes$k.enabled);
+        this.slider.classList.remove(classes$e.enabled);
         this.slider.removeEventListener('mousedown', this.handleMouseDown);
         this.slider.removeEventListener('mouseleave', this.handleMouseLeave);
         this.slider.removeEventListener('mouseup', this.handleMouseUp);
@@ -2849,27 +3240,6 @@
         this.slider.removeEventListener('wheel', this.handleMouseWheel);
       }
     }
-
-    const selectors$n = {
-      buttonArrow: '[data-button-arrow]',
-      collectionImage: '[data-collection-image]',
-      columnImage: '[data-column-image]',
-      productImage: '[data-product-image]',
-      slide: '[data-grid-item]',
-      slider: '[data-grid-slider]',
-    };
-
-    const attributes$d = {
-      buttonPrev: 'data-button-prev',
-      buttonNext: 'data-button-next',
-      alignArrows: 'align-arrows',
-    };
-
-    const classes$j = {
-      arrows: 'slider__arrows',
-      visible: 'is-visible',
-      scrollSnapDisabled: 'scroll-snap-disabled',
-    };
 
     if (!customElements.get('grid-slider')) {
       customElements.define(
@@ -2895,20 +3265,20 @@
           }
 
           init() {
-            this.slider = this.querySelector(selectors$n.slider);
-            this.slides = this.querySelectorAll(selectors$n.slide);
-            this.buttons = this.querySelectorAll(selectors$n.buttonArrow);
-            this.slider.classList.add(classes$j.scrollSnapDisabled);
+            this.slider = this.querySelector('[data-grid-slider]');
+            this.slides = this.querySelectorAll('[data-grid-item]');
+            this.buttons = this.querySelectorAll('[data-button-arrow]');
+            this.slider.classList.add('scroll-snap-disabled');
             this.toggleSlider();
             document.addEventListener('theme:resize:width', this.toggleSlider);
 
             window.theme
               .waitForAllAnimationsEnd(this)
               .then(() => {
-                this.slider.classList.remove(classes$j.scrollSnapDisabled);
+                this.slider.classList.remove('scroll-snap-disabled');
               })
               .catch(() => {
-                this.slider.classList.remove(classes$j.scrollSnapDisabled);
+                this.slider.classList.remove('scroll-snap-disabled');
               });
           }
 
@@ -2917,10 +3287,10 @@
             const slidesWidth = this.getSlidesWidth();
             const isEnabled = sliderWidth < slidesWidth;
 
-            if (isEnabled && (!window.theme.isMobile() || !window.theme.touch)) {
+            if (isEnabled && (!theme.isMobile || !window.theme.touch)) {
               if (this.isInitialized) return;
 
-              this.slidesObserver = new IsInView(this.slider, selectors$n.slide);
+              this.slidesObserver = new IsInView(this.slider, '[data-grid-item]');
 
               this.initArrows();
               this.isInitialized = true;
@@ -2936,19 +3306,19 @@
             // Create arrow buttons if don't exist
             if (!this.buttons.length) {
               const buttonsWrap = document.createElement('div');
-              buttonsWrap.classList.add(classes$j.arrows);
+              buttonsWrap.classList.add('slider__arrows');
               buttonsWrap.innerHTML = theme.sliderArrows.prev + theme.sliderArrows.next;
 
               // Append buttons outside the slider element
               this.append(buttonsWrap);
-              this.buttons = this.querySelectorAll(selectors$n.buttonArrow);
-              this.buttonPrev = this.querySelector(`[${attributes$d.buttonPrev}]`);
-              this.buttonNext = this.querySelector(`[${attributes$d.buttonNext}]`);
+              this.buttons = this.querySelectorAll('[data-button-arrow]');
+              this.buttonPrev = this.querySelector('[data-button-prev]');
+              this.buttonNext = this.querySelector('[data-button-next]');
             }
 
             this.toggleArrowsObserver();
 
-            if (this.hasAttribute(attributes$d.alignArrows)) {
+            if (this.hasAttribute('align-arrows')) {
               this.positionArrows();
               this.arrowsResizeObserver();
             }
@@ -2961,14 +3331,14 @@
           buttonArrowClickEvent(e) {
             e.preventDefault();
 
-            const firstVisibleSlide = this.slider.querySelector(`${selectors$n.slide}.${classes$j.visible}`);
+            const firstVisibleSlide = this.slider.querySelector(`[data-grid-item].is-visible`);
             let slide = null;
 
-            if (e.target.hasAttribute(attributes$d.buttonPrev)) {
+            if (e.target.hasAttribute('data-button-prev')) {
               slide = firstVisibleSlide?.previousElementSibling;
             }
 
-            if (e.target.hasAttribute(attributes$d.buttonNext)) {
+            if (e.target.hasAttribute('data-button-next')) {
               slide = firstVisibleSlide?.nextElementSibling;
             }
 
@@ -2976,7 +3346,7 @@
           }
 
           removeArrows() {
-            this.querySelector(`.${classes$j.arrows}`)?.remove();
+            this.querySelector('.slider__arrows')?.remove();
           }
 
           // Go to prev/next slide on arrow click
@@ -2991,7 +3361,7 @@
           }
 
           getSlidesWidth() {
-            return this.slider.querySelector(selectors$n.slide)?.clientWidth * this.slider.querySelectorAll(selectors$n.slide).length;
+            return this.slider.querySelector('[data-grid-item]')?.clientWidth * this.slider.querySelectorAll('[data-grid-item]').length;
           }
 
           toggleArrowsObserver() {
@@ -3012,7 +3382,7 @@
                 for (const mutation of mutationList) {
                   if (mutation.type === 'attributes') {
                     const slide = mutation.target;
-                    const isDisabled = Boolean(slide.classList.contains(classes$j.visible));
+                    const isDisabled = Boolean(slide.classList.contains('is-visible'));
 
                     if (slide == firstSlide) {
                       this.buttonPrev.disabled = isDisabled;
@@ -3034,8 +3404,21 @@
           }
 
           positionArrows() {
+            if (this.hasAttribute('images-widths-different')) {
+              const figureElements = this.slider.querySelectorAll('figure');
+
+              const biggestHeight = Math.max(0, ...Array.from(figureElements).map((figure) => figure.clientHeight));
+
+              this.style.setProperty('--button-position', `${biggestHeight / 2}px`);
+              return;
+            }
+
             const targetElement =
-              this.slider.querySelector(selectors$n.productImage) || this.slider.querySelector(selectors$n.collectionImage) || this.slider.querySelector(selectors$n.columnImage) || this.slider;
+              this.slider.querySelector('[data-social-video-item]') ||
+              this.slider.querySelector('[data-product-image]') ||
+              this.slider.querySelector('[data-collection-image]') ||
+              this.slider.querySelector('[data-column-image]') ||
+              this.slider;
 
             if (!targetElement) return;
 
@@ -3076,39 +3459,6 @@
       return openModals || openDrawers;
     };
 
-    const selectors$m = {
-      cartDrawer: 'cart-drawer',
-      cartToggleButton: '[data-cart-toggle]',
-      deadLink: '.navlink[href="#"]',
-      desktop: '[data-header-desktop]',
-      firstSectionOverlayHeader: '.main-content > .shopify-section.section-overlay-header:first-of-type',
-      pageHeader: '.page-header',
-      preventTransparent: '[data-prevent-transparent-header]',
-      style: 'data-header-style',
-      widthContent: '[data-child-takes-space]',
-      widthContentWrapper: '[data-takes-space-wrapper]',
-      wrapper: '[data-header-wrapper]',
-    };
-
-    const classes$i = {
-      clone: 'js__header__clone',
-      firstSectionOverlayHeader: 'has-first-section-overlay-header',
-      headerGroup: 'shopify-section-group-header-group',
-      showMobileClass: 'js__show__mobile',
-      sticky: 'has-header-sticky',
-      stuck: 'js__header__stuck',
-      transparent: 'has-header-transparent',
-      headerWrapper: 'header-wrapper',
-    };
-
-    const attributes$c = {
-      drawer: 'data-drawer',
-      drawerToggle: 'data-drawer-toggle',
-      scrollLock: 'data-scroll-locked',
-      stickyHeader: 'data-header-sticky',
-      transparent: 'data-header-transparent',
-    };
-
     if (!customElements.get('header-component')) {
       customElements.define(
         'header-component',
@@ -3117,23 +3467,13 @@
             super();
 
             this.style = this.dataset.style;
-            this.desktop = this.querySelector(selectors$m.desktop);
-            this.deadLinks = document.querySelectorAll(selectors$m.deadLink);
+            this.desktop = this.querySelector('[data-header-desktop]');
+            this.deadLinks = document.querySelectorAll('.navlink[href="#"]');
             this.resizeObserver = null;
             this.checkWidth = this.checkWidth.bind(this);
-            this.isSticky = this.hasAttribute(attributes$c.stickyHeader);
+            this.isSticky = this.hasAttribute('data-header-sticky');
 
-            document.body.classList.toggle(classes$i.sticky, this.isSticky);
-
-            // Fallback for CSS :has() selectors
-            let enableTransparentHeader = false;
-            const firstSectionOverlayHeader = document.querySelector(selectors$m.firstSectionOverlayHeader);
-            if (firstSectionOverlayHeader && !firstSectionOverlayHeader.querySelector(selectors$m.preventTransparent)) {
-              enableTransparentHeader = true;
-            }
-
-            document.body.classList.toggle(classes$i.transparent, this.hasAttribute(attributes$c.transparent));
-            document.body.classList.toggle(classes$i.firstSectionOverlayHeader, enableTransparentHeader);
+            document.body.classList.toggle('has-header-sticky', this.isSticky);
           }
 
           connectedCallback() {
@@ -3158,29 +3498,19 @@
           }
 
           drawerToggleEvent() {
-            this.querySelectorAll(`[${attributes$c.drawerToggle}]`)?.forEach((button) => {
-              button.addEventListener('click', () => {
-                let drawer;
-                const key = button.hasAttribute(attributes$c.drawerToggle) ? button.getAttribute(attributes$c.drawerToggle) : '';
-                const desktopDrawer = document.querySelector(`[${attributes$c.drawer}="${key}"]`);
-                const mobileDrawer = document.querySelector(`mobile-menu > [${attributes$c.drawer}]`);
-                const isDesktopView = !window.theme.isMobile();
+            const button = this.querySelector('[data-drawer-toggle]');
 
-                if (isDesktopView) {
-                  drawer = desktopDrawer;
-                } else {
-                  drawer = theme.settings.mobileMenuType === 'new' ? mobileDrawer || desktopDrawer : desktopDrawer;
-                }
+            button.addEventListener('click', () => {
+              const drawer = document.querySelector('[data-drawer]');
 
-                drawer.dispatchEvent(
-                  new CustomEvent('theme:drawer:toggle', {
-                    bubbles: false,
-                    detail: {
-                      button: button,
-                    },
-                  })
-                );
-              });
+              drawer.dispatchEvent(
+                new CustomEvent('theme:drawer:toggle', {
+                  bubbles: false,
+                  detail: {
+                    button: button,
+                  },
+                })
+              );
             });
           }
 
@@ -3194,27 +3524,27 @@
 
           checkWidth() {
             if (document.body.clientWidth < this.minWidth) {
-              this.classList.add(classes$i.showMobileClass);
+              this.classList.add('js__show__mobile');
 
               // Update --header-height CSS variable when switching to a mobile nav
               const {headerHeight} = window.theme.readHeights();
               document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
             } else {
-              this.classList.remove(classes$i.showMobileClass);
+              this.classList.remove('js__show__mobile');
             }
           }
 
           getMinWidth() {
             const comparitor = document.createElement('div');
-            comparitor.classList.add(classes$i.clone, classes$i.headerWrapper);
+            comparitor.classList.add('js__header__clone', 'header-wrapper');
             comparitor.appendChild(this.querySelector('header').cloneNode(true));
             document.body.appendChild(comparitor);
-            const widthWrappers = comparitor.querySelectorAll(selectors$m.widthContentWrapper);
+            const widthWrappers = comparitor.querySelectorAll('[data-takes-space-wrapper]');
             let minWidth = 0;
             let spaced = 0;
 
             widthWrappers.forEach((context) => {
-              const wideElements = context.querySelectorAll(selectors$m.widthContent);
+              const wideElements = context.querySelectorAll('[data-child-takes-space]');
               let thisWidth = 0;
               if (wideElements.length === 3) {
                 thisWidth = this._sumSplitWidths(wideElements);
@@ -3234,9 +3564,9 @@
           cartToggleEvent() {
             if (theme.settings.cartType !== 'drawer') return;
 
-            this.querySelectorAll(selectors$m.cartToggleButton)?.forEach((button) => {
+            this.querySelectorAll('[data-cart-toggle]')?.forEach((button) => {
               button.addEventListener('click', (e) => {
-                const cartDrawer = document.querySelector(selectors$m.cartDrawer);
+                const cartDrawer = document.querySelector('cart-drawer');
 
                 if (cartDrawer) {
                   e.preventDefault();
@@ -3247,17 +3577,12 @@
             });
           }
 
-          toggleButtonClick(e) {
-            e.preventDefault();
-            document.dispatchEvent(new CustomEvent('theme:cart:toggle', {bubbles: true}));
-          }
-
           initSticky() {
             if (!this.isSticky) return;
 
             this.isStuck = false;
             this.cls = this.classList;
-            this.headerOffset = document.querySelector(selectors$m.pageHeader)?.offsetTop;
+            this.headerOffset = document.querySelector('.page-header')?.offsetTop;
             this.updateHeaderOffset = this.updateHeaderOffset.bind(this);
             this.scrollEvent = (e) => this.onScroll(e);
 
@@ -3282,11 +3607,11 @@
           }
 
           updateHeaderOffset(event) {
-            if (!event.target.classList.contains(classes$i.headerGroup)) return;
+            if (!event.target.classList.contains('shopify-section-group-header-group')) return;
 
             // Update header offset after any "Header group" section has been changed
             setTimeout(() => {
-              this.headerOffset = document.querySelector(selectors$m.pageHeader)?.offsetTop;
+              this.headerOffset = document.querySelector('.page-header')?.offsetTop;
             });
           }
 
@@ -3297,14 +3622,14 @@
           }
 
           stickSimple() {
-            this.cls.add(classes$i.stuck);
+            this.cls.add('js__header__stuck');
             this.isStuck = true;
           }
 
           unstickSimple() {
-            if (!document.documentElement.hasAttribute(attributes$c.scrollLock)) {
+            if (!document.documentElement.hasAttribute('data-scroll-locked')) {
               // check for scroll lock
-              this.cls.remove(classes$i.stuck);
+              this.cls.remove('js__header__stuck');
               this.isStuck = false;
             }
           }
@@ -3350,7 +3675,7 @@
       );
     }
 
-    const selectors$l = {
+    const selectors$h = {
       link: '[data-top-link]',
       wrapper: '[data-header-wrapper]',
       stagger: '[data-stagger]',
@@ -3359,7 +3684,7 @@
       focusable: 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     };
 
-    const classes$h = {
+    const classes$d = {
       isVisible: 'is-visible',
       meganavVisible: 'meganav--visible',
       meganavIsTransitioning: 'meganav--is-transitioning',
@@ -3373,9 +3698,9 @@
           constructor() {
             super();
 
-            this.wrapper = this.closest(selectors$l.wrapper);
+            this.wrapper = this.closest(selectors$h.wrapper);
             this.key = this.getAttribute('aria-controls');
-            this.link = this.querySelector(selectors$l.link);
+            this.link = this.querySelector(selectors$h.link);
             this.grandparent = this.classList.contains('grandparent');
             this.disclosure = document.getElementById(this.key);
             this.transitionTimeout = 0;
@@ -3400,47 +3725,47 @@
 
           showDisclosure(e) {
             if (e && e.type && e.type === 'mouseenter') {
-              this.wrapper.classList.add(classes$h.meganavIsTransitioning);
+              this.wrapper.classList.add(classes$d.meganavIsTransitioning);
             }
 
             if (this.grandparent) {
-              this.wrapper.classList.add(classes$h.meganavVisible);
+              this.wrapper.classList.add(classes$d.meganavVisible);
             } else {
-              this.wrapper.classList.remove(classes$h.meganavVisible);
+              this.wrapper.classList.remove(classes$d.meganavVisible);
             }
             this.setAttribute('aria-expanded', true);
-            this.classList.add(classes$h.isVisible);
-            this.disclosure.classList.add(classes$h.isVisible);
+            this.classList.add(classes$d.isVisible);
+            this.disclosure.classList.add(classes$d.isVisible);
 
             if (this.transitionTimeout) {
               clearTimeout(this.transitionTimeout);
             }
 
             this.transitionTimeout = setTimeout(() => {
-              this.wrapper.classList.remove(classes$h.meganavIsTransitioning);
+              this.wrapper.classList.remove(classes$d.meganavIsTransitioning);
             }, 200);
           }
 
           hideDisclosure() {
-            this.classList.remove(classes$h.isVisible);
-            this.disclosure.classList.remove(classes$h.isVisible);
+            this.classList.remove(classes$d.isVisible);
+            this.disclosure.classList.remove(classes$d.isVisible);
             this.setAttribute('aria-expanded', false);
-            this.wrapper.classList.remove(classes$h.meganavVisible, classes$h.meganavIsTransitioning);
+            this.wrapper.classList.remove(classes$d.meganavVisible, classes$d.meganavIsTransitioning);
           }
 
           staggerChildAnimations() {
-            const simple = this.querySelectorAll(selectors$l.stagger);
+            const simple = this.querySelectorAll(selectors$h.stagger);
             let step = 50;
             simple.forEach((el, index) => {
               el.style.transitionDelay = `${index * step + 10}ms`;
               step *= 0.95;
             });
 
-            const pairs = this.querySelectorAll(selectors$l.staggerPair);
+            const pairs = this.querySelectorAll(selectors$h.staggerPair);
             pairs.forEach((child, i) => {
               const d1 = i * 100;
               child.style.transitionDelay = `${d1}ms`;
-              child.parentElement.querySelectorAll(selectors$l.staggerAfter).forEach((grandchild, i2) => {
+              child.parentElement.querySelectorAll(selectors$h.staggerAfter).forEach((grandchild, i2) => {
                 const di1 = i2 + 1;
                 const d2 = di1 * 20;
                 grandchild.style.transitionDelay = `${d1 + d2}ms`;
@@ -3453,7 +3778,7 @@
             this.addEventListener(
               'touchstart',
               function (e) {
-                const isOpen = this.classList.contains(classes$h.isVisible);
+                const isOpen = this.classList.contains(classes$d.isVisible);
                 if (!isOpen) {
                   e.preventDefault();
                   this.showDisclosure(e);
@@ -3485,7 +3810,7 @@
       );
     }
 
-    const selectors$k = {
+    const selectors$g = {
       drawerInner: '[data-drawer-inner]',
       drawerClose: '[data-drawer-close]',
       underlay: '[data-drawer-underlay]',
@@ -3494,7 +3819,7 @@
       focusable: 'button, [href], select, textarea, [tabindex]:not([tabindex="-1"])',
     };
 
-    const classes$g = {
+    const classes$c = {
       animated: 'drawer--animated',
       open: 'is-open',
       closing: 'is-closing',
@@ -3512,11 +3837,11 @@
             this.a11y = window.theme.a11y;
             this.isAnimating = false;
             this.drawer = this;
-            this.drawerInner = this.querySelector(selectors$k.drawerInner);
-            this.underlay = this.querySelector(selectors$k.underlay);
+            this.drawerInner = this.querySelector(selectors$g.drawerInner);
+            this.underlay = this.querySelector(selectors$g.underlay);
             this.triggerButton = null;
 
-            this.staggers = this.querySelectorAll(selectors$k.stagger);
+            this.staggers = this.querySelectorAll(selectors$g.stagger);
             this.showDrawer = this.showDrawer.bind(this);
             this.hideDrawer = this.hideDrawer.bind(this);
 
@@ -3528,7 +3853,7 @@
             this.addEventListener('theme:drawer:toggle', (e) => {
               this.triggerButton = e.detail?.button;
 
-              if (this.classList.contains(classes$g.open)) {
+              if (this.classList.contains(classes$c.open)) {
                 this.dispatchEvent(
                   new CustomEvent('theme:drawer:close', {
                     bubbles: true,
@@ -3550,7 +3875,7 @@
           }
 
           closers() {
-            this.querySelectorAll(selectors$k.drawerClose)?.forEach((button) => {
+            this.querySelectorAll(selectors$g.drawerClose)?.forEach((button) => {
               button.addEventListener('click', () => {
                 this.hideDrawer();
               });
@@ -3575,7 +3900,7 @@
             this.isAnimating = true;
 
             this.triggerButton?.setAttribute('aria-expanded', true);
-            this.classList.add(classes$g.open, classes$g.animated);
+            this.classList.add(classes$c.open, classes$c.animated);
 
             document.dispatchEvent(new CustomEvent('theme:scroll:lock', {bubbles: true}));
 
@@ -3586,26 +3911,26 @@
                 this.isAnimating = false;
 
                 this.a11y.trapFocus(this.drawerInner, {
-                  elementToFocus: this.querySelector(selectors$k.focusable),
+                  elementToFocus: this.querySelector(selectors$g.focusable),
                 });
               });
             }
           }
 
           hideDrawer() {
-            if (this.isAnimating || !this.classList.contains(classes$g.open)) return;
+            if (this.isAnimating || !this.classList.contains(classes$c.open)) return;
 
             this.isAnimating = true;
 
-            this.classList.add(classes$g.closing);
-            this.classList.remove(classes$g.open);
+            this.classList.add(classes$c.closing);
+            this.classList.remove(classes$c.open);
 
             this.a11y.removeTrapFocus();
 
             if (this.triggerButton) {
               this.triggerButton.setAttribute('aria-expanded', false);
 
-              if (document.body.classList.contains(classes$g.isFocused)) {
+              if (document.body.classList.contains(classes$c.isFocused)) {
                 this.triggerButton.focus();
               }
             }
@@ -3613,7 +3938,7 @@
             document.dispatchEvent(new CustomEvent('theme:scroll:unlock', {bubbles: true}));
 
             window.theme.waitForAnimationEnd(this.drawerInner).then(() => {
-              this.classList.remove(classes$g.closing, classes$g.animated);
+              this.classList.remove(classes$c.closing, classes$c.animated);
 
               this.isAnimating = false;
 
@@ -3629,28 +3954,6 @@
       );
     }
 
-    const selectors$j = {
-      animates: 'data-animates',
-      sliderule: '[data-sliderule]',
-      slideruleOpen: 'data-sliderule-open',
-      slideruleClose: 'data-sliderule-close',
-      sliderulePane: 'data-sliderule-pane',
-      drawerContent: '[data-drawer-content]',
-      focusable: 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      children: `:scope > [data-animates],
-             :scope > * > [data-animates],
-             :scope > * > * > [data-animates],
-             :scope > * > .sliderule-grid  > *`,
-    };
-
-    const classes$f = {
-      isVisible: 'is-visible',
-      isHiding: 'is-hiding',
-      isHidden: 'is-hidden',
-      focused: 'is-focused',
-      scrolling: 'is-scrolling',
-    };
-
     if (!customElements.get('mobile-sliderule')) {
       customElements.define(
         'mobile-sliderule',
@@ -3660,14 +3963,18 @@
             super();
 
             this.key = this.id;
-            this.sliderule = this.querySelector(selectors$j.sliderule);
-            const btnSelector = `[${selectors$j.slideruleOpen}='${this.key}']`;
-            this.exitSelector = `[${selectors$j.slideruleClose}='${this.key}']`;
+            this.menuBlock = this.closest('[data-mobile-menu-block]');
+            this.sliderule = this.querySelector('[data-sliderule]');
+            const btnSelector = `[data-sliderule-open='${this.key}']`;
+            this.exitSelector = `[data-sliderule-close='${this.key}']`;
             this.trigger = this.querySelector(btnSelector);
             this.exit = document.querySelectorAll(this.exitSelector);
-            this.pane = this.trigger.closest(`[${selectors$j.sliderulePane}]`);
-            this.childrenElements = this.querySelectorAll(selectors$j.children);
-            this.drawerContent = this.closest(selectors$j.drawerContent);
+            this.pane = this.trigger.closest('[data-sliderule-pane]');
+            this.childrenElements = this.querySelectorAll(`:scope > [data-animates],
+             :scope > * > [data-animates],
+             :scope > * > * > [data-animates],
+             :scope > * > .sliderule-grid  > *`);
+            this.drawerContent = this.closest('[data-drawer-content]');
             this.cachedButton = null;
             this.a11y = window.theme.a11y;
 
@@ -3680,6 +3987,15 @@
             this.keyboardEvents();
 
             document.addEventListener('theme:sliderule:close', this.closeSliderule);
+          }
+
+          connectedCallback() {
+            // Set initial height for menu block (required for CSS transition)
+            requestAnimationFrame(() => {
+              if (this.menuBlock && !this.menuBlock.style.getPropertyValue('--block-height')) {
+                this.menuBlock.style.setProperty('--block-height', `${this.menuBlock.scrollHeight}px`);
+              }
+            });
           }
 
           clickEvents() {
@@ -3705,6 +4021,15 @@
             });
           }
 
+          adjustMenuHeight() {
+            if (!this.menuBlock) return;
+
+            const visiblePanel = this.menuBlock.querySelector('[data-sliderule="2"].is-visible') || this.menuBlock.querySelector('[data-sliderule="1"].is-visible') || this.menuBlock;
+            const linksContainer = visiblePanel.querySelector('[data-links]');
+
+            this.menuBlock.style.setProperty('--block-height', `${linksContainer.scrollHeight}px`);
+          }
+
           trapFocusSliderule(showSliderule = true) {
             const trapFocusButton = showSliderule ? this.querySelector(this.exitSelector) : this.cachedButton;
 
@@ -3712,44 +4037,46 @@
 
             if (trapFocusButton && this.drawerContent) {
               this.a11y.trapFocus(this.drawerContent, {
-                elementToFocus: document.body.classList.contains(classes$f.focused) ? trapFocusButton : null,
+                elementToFocus: document.body.classList.contains('is-focused') ? trapFocusButton : null,
               });
             }
           }
 
           hideSliderule(close = false) {
             const newPosition = parseInt(this.pane.dataset.sliderulePane, 10) - 1;
-            this.pane.setAttribute(selectors$j.sliderulePane, newPosition);
-            this.pane.classList.add(classes$f.isHiding);
-            this.sliderule.classList.add(classes$f.isHiding);
-            const hiddenSelector = close ? `[${selectors$j.animates}].${classes$f.isHidden}` : `[${selectors$j.animates}="${newPosition}"]`;
+            this.pane.setAttribute('data-sliderule-pane', newPosition);
+            this.pane.classList.add('is-hiding');
+            this.sliderule.classList.add('is-hiding');
+            const hiddenSelector = close ? `[data-animates].is-hidden` : `[data-animates="${newPosition}"]`;
             const hiddenItems = this.pane.querySelectorAll(hiddenSelector);
-            if (hiddenItems.length) {
-              hiddenItems.forEach((element) => {
-                element.classList.remove(classes$f.isHidden);
-              });
-            }
+            hiddenItems?.forEach((element) => {
+              element.classList.remove('is-hidden');
+            });
 
-            const children = close ? this.pane.querySelectorAll(`.${classes$f.isVisible}, .${classes$f.isHiding}`) : this.childrenElements;
+            const children = close ? this.pane.querySelectorAll('.is-visible, .is-hiding') : this.childrenElements;
+            const childrenLength = children.length;
             children.forEach((element, index) => {
-              const lastElement = children.length - 1 == index;
-              element.classList.remove(classes$f.isVisible);
+              const lastElement = index === childrenLength - 1;
+              element.classList.remove('is-visible');
               if (close) {
-                element.classList.remove(classes$f.isHiding);
-                this.pane.classList.remove(classes$f.isHiding);
+                element.classList.remove('is-hiding');
+                this.pane.classList.remove('is-hiding');
               }
               const removeHidingClass = () => {
-                if (parseInt(this.pane.getAttribute(selectors$j.sliderulePane)) === newPosition) {
-                  this.sliderule.classList.remove(classes$f.isVisible);
+                if (parseInt(this.pane.getAttribute('data-sliderule-pane')) === newPosition) {
+                  this.sliderule.classList.remove('is-visible');
                 }
-                this.sliderule.classList.remove(classes$f.isHiding);
-                this.pane.classList.remove(classes$f.isHiding);
+                this.sliderule.classList.remove('is-hiding');
+                this.pane.classList.remove('is-hiding');
 
                 if (lastElement) {
                   this.a11y.removeTrapFocus();
                   if (!close) {
                     this.trapFocusSliderule(false);
                   }
+                  requestAnimationFrame(() => {
+                    this.adjustMenuHeight();
+                  });
                 }
 
                 element.removeEventListener('animationend', removeHidingClass);
@@ -3765,12 +4092,8 @@
 
           showSliderule() {
             let lastScrollableFrame = null;
-            const parent = this.closest(`.${classes$f.isVisible}`);
-            let lastScrollableElement = this.pane;
-
-            if (parent) {
-              lastScrollableElement = parent;
-            }
+            const parent = this.closest('.is-visible');
+            const lastScrollableElement = parent || this.pane;
 
             lastScrollableElement.scrollTo({
               top: 0,
@@ -3778,11 +4101,11 @@
               behavior: 'smooth',
             });
 
-            lastScrollableElement.classList.add(classes$f.scrolling);
+            lastScrollableElement.classList.add('is-scrolling');
 
             const lastScrollableIsScrolling = () => {
               if (lastScrollableElement.scrollTop <= 0) {
-                lastScrollableElement.classList.remove(classes$f.scrolling);
+                lastScrollableElement.classList.remove('is-scrolling');
                 if (lastScrollableFrame) {
                   cancelAnimationFrame(lastScrollableFrame);
                 }
@@ -3795,41 +4118,47 @@
 
             const oldPosition = parseInt(this.pane.dataset.sliderulePane, 10);
             const newPosition = oldPosition + 1;
-            this.sliderule.classList.add(classes$f.isVisible);
-            this.pane.setAttribute(selectors$j.sliderulePane, newPosition);
+            this.sliderule.classList.add('is-visible');
+            this.pane.setAttribute('data-sliderule-pane', newPosition);
 
-            const hiddenItems = this.pane.querySelectorAll(`[${selectors$j.animates}="${oldPosition}"]`);
-            if (hiddenItems.length) {
-              hiddenItems.forEach((element, index) => {
-                const lastElement = hiddenItems.length - 1 == index;
-                element.classList.add(classes$f.isHiding);
-                const removeHidingClass = () => {
-                  element.classList.remove(classes$f.isHiding);
-                  if (parseInt(this.pane.getAttribute(selectors$j.sliderulePane)) !== oldPosition) {
-                    element.classList.add(classes$f.isHidden);
-                  }
+            requestAnimationFrame(() => {
+              this.adjustMenuHeight();
+            });
 
-                  if (lastElement) {
-                    this.trapFocusSliderule();
-                  }
-                  element.removeEventListener('animationend', removeHidingClass);
-                };
-
-                if (window.theme.settings.enableAnimations) {
-                  element.addEventListener('animationend', removeHidingClass);
-                } else {
-                  removeHidingClass();
+            const hiddenItems = this.pane.querySelectorAll(`[data-animates="${oldPosition}"]`);
+            const hiddenItemsLength = hiddenItems.length;
+            hiddenItems?.forEach((element, index) => {
+              const lastElement = index === hiddenItemsLength - 1;
+              element.classList.add('is-hiding');
+              const removeHidingClass = () => {
+                element.classList.remove('is-hiding');
+                if (parseInt(this.pane.getAttribute('data-sliderule-pane')) !== oldPosition) {
+                  element.classList.add('is-hidden');
                 }
-              });
-            }
+
+                if (lastElement) {
+                  this.trapFocusSliderule();
+                }
+                element.removeEventListener('animationend', removeHidingClass);
+              };
+
+              if (window.theme.settings.enableAnimations) {
+                element.addEventListener('animationend', removeHidingClass);
+              } else {
+                removeHidingClass();
+              }
+            });
           }
 
           closeSliderule() {
-            if (this.pane && this.pane.hasAttribute(selectors$j.sliderulePane) && parseInt(this.pane.getAttribute(selectors$j.sliderulePane)) > 0) {
+            if (this.pane && this.pane.hasAttribute('data-sliderule-pane') && parseInt(this.pane.getAttribute('data-sliderule-pane')) > 0) {
               this.hideSliderule(true);
-              if (parseInt(this.pane.getAttribute(selectors$j.sliderulePane)) > 0) {
-                this.pane.setAttribute(selectors$j.sliderulePane, 0);
+              if (parseInt(this.pane.getAttribute('data-sliderule-pane')) > 0) {
+                this.pane.setAttribute('data-sliderule-pane', 0);
               }
+              requestAnimationFrame(() => {
+                this.adjustMenuHeight();
+              });
             }
           }
 
@@ -3840,7 +4169,7 @@
       );
     }
 
-    const selectors$i = {
+    const selectors$f = {
       details: 'details',
       popdown: '[data-popdown]',
       popdownClose: '[data-popdown-close]',
@@ -3848,23 +4177,23 @@
       mobileMenu: 'mobile-menu',
     };
 
-    const attributes$b = {
+    const attributes$a = {
       popdownUnderlay: 'data-popdown-underlay',
       scrollLocked: 'data-scroll-locked',
     };
 
-    const classes$e = {
+    const classes$b = {
       open: 'is-open',
     };
     class SearchPopdown extends HTMLElement {
       constructor() {
         super();
-        this.popdown = this.querySelector(selectors$i.popdown);
-        this.popdownContainer = this.querySelector(selectors$i.details);
-        this.popdownClose = this.querySelector(selectors$i.popdownClose);
+        this.popdown = this.querySelector(selectors$f.popdown);
+        this.popdownContainer = this.querySelector(selectors$f.details);
+        this.popdownClose = this.querySelector(selectors$f.popdownClose);
         this.popdownTransitionCallback = this.popdownTransitionCallback.bind(this);
         this.detailsToggleCallback = this.detailsToggleCallback.bind(this);
-        this.mobileMenu = this.closest(selectors$i.mobileMenu);
+        this.mobileMenu = this.closest(selectors$f.mobileMenu);
         this.a11y = window.theme.a11y;
       }
 
@@ -3882,41 +4211,39 @@
       }
 
       popdownTransitionCallback(event) {
-        if (event.target !== this.popdown) return;
+        if (event.target !== this.popdown || event.propertyName !== 'opacity') return;
 
-        if (!this.classList.contains(classes$e.open)) {
+        if (!this.classList.contains('is-open')) {
           this.popdownContainer.removeAttribute('open');
           this.a11y.removeTrapFocus();
-        } else if (event.propertyName === 'transform' || event.propertyName === 'opacity') {
+        } else {
           // Wait for the 'transform' transition to complete in order to prevent jumping content issues because of the trapFocus
           this.a11y.trapFocus(this.popdown, {
-            elementToFocus: this.popdown.querySelector(selectors$i.input),
+            elementToFocus: this.popdown.querySelector('input:not([type="hidden"])'),
           });
         }
       }
 
       onBodyClick(event) {
-        if (!this.contains(event.target) || event.target.hasAttribute(attributes$b.popdownUnderlay)) this.close();
+        if (!this.contains(event.target) || event.target.hasAttribute(attributes$a.popdownUnderlay)) this.close();
       }
 
       open() {
         this.onBodyClickEvent = this.onBodyClickEvent || this.onBodyClick.bind(this);
 
         document.body.addEventListener('click', this.onBodyClickEvent);
-        this.mobileMenu?.dispatchEvent(new CustomEvent('theme:search:open'));
 
-        if (!document.documentElement.hasAttribute(attributes$b.scrollLocked)) {
+        if (!document.documentElement.hasAttribute(attributes$a.scrollLocked)) {
           document.dispatchEvent(new CustomEvent('theme:scroll:lock', {bubbles: true}));
         }
 
         requestAnimationFrame(() => {
-          this.classList.add(classes$e.open);
+          this.classList.add(classes$b.open);
         });
       }
 
       close() {
-        this.classList.remove(classes$e.open);
-        this.mobileMenu?.dispatchEvent(new CustomEvent('theme:search:close'));
+        this.classList.remove(classes$b.open);
 
         document.body.removeEventListener('click', this.onBodyClickEvent);
 
@@ -3930,13 +4257,13 @@
       customElements.define('header-search-popdown', SearchPopdown);
     }
 
-    const selectors$h = {
+    const selectors$e = {
       inputSearch: 'input[type="search"]',
       focusedElements: '[aria-selected="true"] a',
       resetButton: 'button[type="reset"]',
     };
 
-    const classes$d = {
+    const classes$a = {
       hidden: 'hidden',
     };
 
@@ -3944,8 +4271,8 @@
       constructor() {
         super();
 
-        this.input = this.querySelector(selectors$h.inputSearch);
-        this.resetButton = this.querySelector(selectors$h.resetButton);
+        this.input = this.querySelector(selectors$e.inputSearch);
+        this.resetButton = this.querySelector(selectors$e.resetButton);
 
         if (this.input) {
           this.input.form.addEventListener('reset', this.onFormReset.bind(this));
@@ -3961,11 +4288,11 @@
       }
 
       toggleResetButton() {
-        const resetIsHidden = this.resetButton.classList.contains(classes$d.hidden);
+        const resetIsHidden = this.resetButton.classList.contains(classes$a.hidden);
         if (this.input.value.length > 0 && resetIsHidden) {
-          this.resetButton.classList.remove(classes$d.hidden);
+          this.resetButton.classList.remove(classes$a.hidden);
         } else if (this.input.value.length === 0 && !resetIsHidden) {
-          this.resetButton.classList.add(classes$d.hidden);
+          this.resetButton.classList.add(classes$a.hidden);
         }
       }
 
@@ -3974,7 +4301,7 @@
       }
 
       shouldResetForm() {
-        return !document.querySelector(selectors$h.focusedElements);
+        return !document.querySelector(selectors$e.focusedElements);
       }
 
       onFormReset(event) {
@@ -3984,14 +4311,14 @@
         if (this.shouldResetForm()) {
           this.input.value = '';
           this.toggleResetButton();
-          event.target.querySelector(selectors$h.inputSearch).focus();
+          event.target.querySelector(selectors$e.inputSearch).focus();
         }
       }
     }
 
     customElements.define('header-search-form', HeaderSearchForm);
 
-    const selectors$g = {
+    const selectors$d = {
       inputSearch: 'input[type="search"]',
     };
 
@@ -3999,7 +4326,7 @@
       constructor() {
         super();
 
-        this.allSearchInputs = document.querySelectorAll(selectors$g.inputSearch);
+        this.allSearchInputs = document.querySelectorAll(selectors$d.inputSearch);
         this.setupEventListeners();
       }
 
@@ -4025,7 +4352,7 @@
       }
 
       onInputFocus() {
-        if (window.theme.isMobile()) {
+        if (theme.isMobile) {
           this.scrollIntoView({behavior: 'smooth'});
         }
       }
@@ -4043,17 +4370,17 @@
       customElements.define('main-search', MainSearch);
     }
 
-    const selectors$f = {
+    const selectors$c = {
       scrollbar: '[data-scrollbar]',
       scrollbarArrowPrev: '[data-scrollbar-arrow-prev]',
       scrollbarArrowNext: '[data-scrollbar-arrow-next]',
     };
 
-    const classes$c = {
+    const classes$9 = {
       hidden: 'is-hidden',
     };
 
-    const attributes$a = {
+    const attributes$9 = {
       scrollbarSlider: 'data-scrollbar-slider',
       scrollbarSlideFullWidth: 'data-scrollbar-slide-fullwidth',
     };
@@ -4065,22 +4392,22 @@
           constructor() {
             super();
 
-            this.scrollbar = this.querySelector(selectors$f.scrollbar);
-            this.arrowNext = this.querySelector(selectors$f.scrollbarArrowNext);
-            this.arrowPrev = this.querySelector(selectors$f.scrollbarArrowPrev);
+            this.scrollbar = this.querySelector(selectors$c.scrollbar);
+            this.arrowNext = this.querySelector(selectors$c.scrollbarArrowNext);
+            this.arrowPrev = this.querySelector(selectors$c.scrollbarArrowPrev);
             this.toggleNextArrow = this.toggleNextArrow.bind(this);
-            this.addEventListener('theme:swatches:loaded', this.toggleNextArrow);
           }
 
           connectedCallback() {
             document.addEventListener('theme:resize', this.toggleNextArrow);
 
-            if (this.scrollbar.hasAttribute(attributes$a.scrollbarSlider)) {
+            if (this.scrollbar.hasAttribute(attributes$9.scrollbarSlider)) {
               this.scrollToVisibleElement();
             }
 
             if (this.arrowNext && this.arrowPrev) {
               this.events();
+              this.toggleNextArrow(); // Show arrow next on page load if there are items to scroll to
             }
           }
 
@@ -4108,36 +4435,36 @@
           }
 
           goToNext() {
-            const moveWith = this.scrollbar.hasAttribute(attributes$a.scrollbarSlideFullWidth) ? this.scrollbar.getBoundingClientRect().width : this.scrollbar.getBoundingClientRect().width / 2;
+            const moveWith = this.scrollbar.hasAttribute(attributes$9.scrollbarSlideFullWidth) ? this.scrollbar.getBoundingClientRect().width : this.scrollbar.getBoundingClientRect().width / 2;
             const position = moveWith + this.scrollbar.scrollLeft;
 
             this.move(position);
 
-            this.arrowPrev.classList.remove(classes$c.hidden);
+            this.arrowPrev.classList.remove(classes$9.hidden);
 
             this.toggleNextArrow();
           }
 
           goToPrev() {
-            const moveWith = this.scrollbar.hasAttribute(attributes$a.scrollbarSlideFullWidth) ? this.scrollbar.getBoundingClientRect().width : this.scrollbar.getBoundingClientRect().width / 2;
+            const moveWith = this.scrollbar.hasAttribute(attributes$9.scrollbarSlideFullWidth) ? this.scrollbar.getBoundingClientRect().width : this.scrollbar.getBoundingClientRect().width / 2;
             const position = this.scrollbar.scrollLeft - moveWith;
 
             this.move(position);
 
-            this.arrowNext.classList.remove(classes$c.hidden);
+            this.arrowNext.classList.remove(classes$9.hidden);
 
             this.togglePrevArrow();
           }
 
           toggleNextArrow() {
             requestAnimationFrame(() => {
-              this.arrowNext?.classList.toggle(classes$c.hidden, Math.round(this.scrollbar.scrollLeft + this.scrollbar.getBoundingClientRect().width + 1) >= this.scrollbar.scrollWidth);
+              this.arrowNext?.classList.toggle(classes$9.hidden, Math.round(this.scrollbar.scrollLeft + this.scrollbar.getBoundingClientRect().width + 1) >= this.scrollbar.scrollWidth);
             });
           }
 
           togglePrevArrow() {
             requestAnimationFrame(() => {
-              this.arrowPrev.classList.toggle(classes$c.hidden, this.scrollbar.scrollLeft <= 0);
+              this.arrowPrev.classList.toggle(classes$9.hidden, this.scrollbar.scrollLeft <= 0);
             });
           }
 
@@ -4151,42 +4478,16 @@
             });
           }
 
-          move(offsetLeft) {
+          move(offsetLeft, behavior = 'smooth') {
             this.scrollbar.scrollTo({
               top: 0,
               left: offsetLeft,
-              behavior: 'smooth',
+              behavior: behavior,
             });
           }
         }
       );
     }
-
-    const selectors$e = {
-      popoutList: '[data-popout-list]',
-      popoutToggle: '[data-popout-toggle]',
-      popoutToggleText: '[data-popout-toggle-text]',
-      popoutInput: '[data-popout-input]',
-      popoutOptions: '[data-popout-option]',
-      productGridImage: '[data-product-image]',
-      productGridItem: '[data-grid-item]',
-      section: '[data-section-type]',
-    };
-
-    const classes$b = {
-      listVisible: 'popout-list--visible',
-      visible: 'is-visible',
-      active: 'is-active',
-      popoutListTop: 'popout-list--top',
-    };
-
-    const attributes$9 = {
-      ariaExpanded: 'aria-expanded',
-      ariaCurrent: 'aria-current',
-      dataValue: 'data-value',
-      popoutToggleText: 'data-popout-toggle-text',
-      submit: 'submit',
-    };
 
     if (!customElements.get('popout-select')) {
       customElements.define(
@@ -4197,13 +4498,14 @@
           }
 
           connectedCallback() {
-            this.popoutList = this.querySelector(selectors$e.popoutList);
-            this.popoutToggle = this.querySelector(selectors$e.popoutToggle);
-            this.popoutToggleText = this.querySelector(selectors$e.popoutToggleText);
-            this.popoutInput = this.querySelector(selectors$e.popoutInput) || this.parentNode.querySelector(selectors$e.popoutInput);
-            this.popoutOptions = this.querySelectorAll(selectors$e.popoutOptions);
-            this.productGridItem = this.popoutList.closest(selectors$e.productGridItem);
-            this.fireSubmitEvent = this.hasAttribute(attributes$9.submit);
+            this.popoutList = this.querySelector('[data-popout-list]');
+            this.popoutToggle = this.querySelector('[data-popout-toggle]');
+            this.popoutToggleText = this.querySelector('[data-popout-toggle-text]');
+            this.popoutInput = this.querySelector('[data-popout-input]') || this.parentNode.querySelector('[data-popout-input]') || this.parentNode.parentNode.querySelector('[data-quantity-input]');
+
+            this.popoutOptions = this.querySelectorAll('[data-popout-option]');
+            this.productGridItem = this.popoutList.closest('[data-grid-item]');
+            this.fireSubmitEvent = this.hasAttribute('submit');
 
             this.popupToggleFocusoutEvent = (evt) => this.onPopupToggleFocusout(evt);
             this.popupListFocusoutEvent = (evt) => this.onPopupListFocusout(evt);
@@ -4214,27 +4516,31 @@
             this._connectOptions();
             this._connectToggle();
             this._onFocusOut();
-            this.popupListSetDimensions();
           }
 
           onPopupToggleClick(evt) {
             const button = evt.currentTarget;
-            const ariaExpanded = button.getAttribute(attributes$9.ariaExpanded) === 'true';
+            const ariaExpanded = button.getAttribute('aria-expanded') === 'true';
 
             if (this.productGridItem) {
-              const productGridItemImage = this.productGridItem.querySelector(selectors$e.productGridImage);
+              const productGridItemImage = this.productGridItem.querySelector('[data-product-image]');
 
               if (productGridItemImage) {
-                productGridItemImage.classList.toggle(classes$b.visible, !ariaExpanded);
+                productGridItemImage.classList.toggle('is-visible', !ariaExpanded);
               }
 
               this.popoutList.style.maxHeight = `${Math.abs(this.popoutToggle.getBoundingClientRect().bottom - this.productGridItem.getBoundingClientRect().bottom)}px`;
             }
 
-            evt.currentTarget.setAttribute(attributes$9.ariaExpanded, !ariaExpanded);
-            this.popoutList.classList.toggle(classes$b.listVisible);
-            this.popupListSetDimensions();
-            this.toggleListPosition();
+            this.popoutList.classList.toggle('popout-list--visible');
+            button.setAttribute('aria-expanded', !ariaExpanded);
+
+            if (!ariaExpanded) {
+              this.toggleListPosition();
+              this.popupListSetDimensions();
+            } else {
+              this._hideList();
+            }
 
             document.body.addEventListener('click', this.bodyClickEvent);
           }
@@ -4249,7 +4555,7 @@
 
           onPopupListFocusout(evt) {
             const childInFocus = evt.currentTarget.contains(evt.relatedTarget);
-            const isVisible = this.popoutList.classList.contains(classes$b.listVisible);
+            const isVisible = this.popoutList.classList.contains('popout-list--visible');
 
             if (isVisible && !childInFocus) {
               this._hideList();
@@ -4257,23 +4563,10 @@
           }
 
           toggleListPosition() {
-            const button = this.querySelector(selectors$e.popoutToggle);
-            const popoutTop = this.getBoundingClientRect().top + this.clientHeight;
+            const popoutToggleTop = this.popoutToggle.getBoundingClientRect().top;
 
-            const removeTopClass = () => {
-              if (button.getAttribute(attributes$9.ariaExpanded) !== 'true') {
-                this.popoutList.classList.remove(classes$b.popoutListTop);
-              }
-
-              this.popoutList.removeEventListener('transitionend', removeTopClass);
-            };
-
-            if (button.getAttribute(attributes$9.ariaExpanded) === 'true') {
-              if (window.innerHeight / 2 < popoutTop) {
-                this.popoutList.classList.add(classes$b.popoutListTop);
-              }
-            } else {
-              this.popoutList.addEventListener('transitionend', removeTopClass);
+            if (theme.windowHeight / 2 < popoutToggleTop) {
+              this.popoutList.classList.add('popout-list--top');
             }
           }
 
@@ -4282,19 +4575,39 @@
             this.popoutList.style.setProperty('--max-height', '100vh');
 
             requestAnimationFrame(() => {
-              this.popoutList.style.setProperty('--max-width', `${parseInt(document.body.clientWidth - this.popoutList.getBoundingClientRect().left)}px`);
-              this.popoutList.style.setProperty('--max-height', `${parseInt(document.body.clientHeight - this.popoutList.getBoundingClientRect().top)}px`);
+              const listRect = this.popoutList.getBoundingClientRect();
+              const toggleRect = this.popoutToggle.getBoundingClientRect();
+
+              const distanceToRight = theme.windowWidth - listRect.left;
+              const distanceToBottom = theme.windowHeight - toggleRect.bottom;
+              const distanceToTop = toggleRect.top;
+
+              const opensUp = this.popoutList.classList.contains('popout-list--top');
+              const maxHeight = opensUp ? distanceToTop : distanceToBottom;
+
+              this.popoutList.style.setProperty('--max-width', `${Math.floor(distanceToRight)}px`);
+              this.popoutList.style.setProperty('--max-height', `${Math.floor(maxHeight)}px`);
             });
           }
 
           popupOptionsClick(evt) {
-            const link = evt.target.closest(selectors$e.popoutOptions);
+            const link = evt.target.closest('[data-popout-option]');
 
             if (link.attributes.href.value === '#') {
               evt.preventDefault();
 
-              const attrValue = evt.currentTarget.hasAttribute(attributes$9.dataValue) ? evt.currentTarget.getAttribute(attributes$9.dataValue) : '';
+              const attrValue = evt.currentTarget.hasAttribute('data-value') ? evt.currentTarget.getAttribute('data-value') : '';
+
               this.popoutInput.value = attrValue;
+
+              // Sync option metadata onto the hidden input so downstream logic can read it
+              const listItem = evt.currentTarget.closest('li');
+              if (listItem) {
+                const optionValueId = listItem.getAttribute('data-option-value-id');
+                const productUrl = listItem.getAttribute('data-product-url');
+                if (optionValueId) this.popoutInput.setAttribute('data-option-value-id', optionValueId);
+                if (productUrl) this.popoutInput.setAttribute('data-product-url', productUrl);
+              }
 
               if (this.popoutInput.disabled) {
                 this.popoutInput.removeAttribute('disabled');
@@ -4304,30 +4617,31 @@
                 this._submitForm(attrValue);
               } else {
                 const currentTarget = evt.currentTarget.parentElement;
-                const listTargetElement = this.popoutList.querySelector(`.${classes$b.active}`);
-                const targetAttribute = this.popoutList.querySelector(`[${attributes$9.ariaCurrent}]`);
+                const listTargetElement = this.popoutList.querySelector('.is-active');
+                const targetAttribute = this.popoutList.querySelector('[aria-current]');
 
-                this.popoutInput.dispatchEvent(new Event('change'));
+                // Fire a bubbling change event so parent controllers can react
+                this.popoutInput.dispatchEvent(new Event('change', {bubbles: true}));
 
                 if (listTargetElement) {
-                  listTargetElement.classList.remove(classes$b.active);
-                  currentTarget.classList.add(classes$b.active);
+                  listTargetElement.classList.remove('is-active');
+                  currentTarget.classList.add('is-active');
                 }
 
                 if (this.popoutInput.name == 'quantity' && !currentTarget.nextSibling) {
-                  this.classList.add(classes$b.active);
+                  this.classList.add('is-active');
                 }
 
-                if (targetAttribute && targetAttribute.hasAttribute(`${attributes$9.ariaCurrent}`)) {
-                  targetAttribute.removeAttribute(`${attributes$9.ariaCurrent}`);
-                  evt.currentTarget.setAttribute(`${attributes$9.ariaCurrent}`, 'true');
+                if (targetAttribute && targetAttribute.hasAttribute('aria-current')) {
+                  targetAttribute.removeAttribute('aria-current');
+                  evt.currentTarget.setAttribute('aria-current', 'true');
                 }
 
                 if (attrValue !== '') {
                   this.popoutToggleText.innerHTML = attrValue;
 
-                  if (this.popoutToggleText.hasAttribute(attributes$9.popoutToggleText) && this.popoutToggleText.getAttribute(attributes$9.popoutToggleText) !== '') {
-                    this.popoutToggleText.setAttribute(attributes$9.popoutToggleText, attrValue);
+                  if (this.popoutToggleText.hasAttribute('data-popout-toggle-text') && this.popoutToggleText.getAttribute('data-popout-toggle-text') !== '') {
+                    this.popoutToggleText.setAttribute('data-popout-toggle-text', attrValue);
                   }
                 }
                 this.onPopupToggleFocusout(evt);
@@ -4346,7 +4660,7 @@
 
           onBodyClick(evt) {
             const isOption = this.contains(evt.target);
-            const isVisible = this.popoutList.classList.contains(classes$b.listVisible);
+            const isVisible = this.popoutList.classList.contains('popout-list--visible');
 
             if (isVisible && !isOption) {
               this._hideList();
@@ -4379,9 +4693,8 @@
           }
 
           _hideList() {
-            this.popoutList.classList.remove(classes$b.listVisible);
-            this.popoutToggle.setAttribute(attributes$9.ariaExpanded, false);
-            this.toggleListPosition();
+            this.popoutList.classList.remove('popout-list--visible', 'popout-list--top');
+            this.popoutToggle.setAttribute('aria-expanded', false);
             document.body.removeEventListener('click', this.bodyClickEvent);
           }
         }
@@ -4433,7 +4746,7 @@
       }
     }
 
-    const selectors$d = {
+    const selectors$b = {
       open: '[data-popup-open]',
       close: '[data-popup-close]',
       dialog: 'dialog',
@@ -4452,7 +4765,7 @@
       preventTopLayer: 'data-prevent-top-layer',
     };
 
-    const classes$a = {
+    const classes$8 = {
       hidden: 'hidden',
       hasValue: 'has-value',
       cartBarVisible: 'cart-bar-visible',
@@ -4466,10 +4779,10 @@
     class PopupComponent extends HTMLElement {
       constructor() {
         super();
-        this.popup = this.querySelector(selectors$d.dialog);
+        this.popup = this.querySelector(selectors$b.dialog);
         this.preventTopLayer = this.popup.hasAttribute(attributes$8.preventTopLayer);
         this.enableScrollLock = this.popup.hasAttribute(attributes$8.scrollLock);
-        this.buttonPopupOpen = this.querySelector(selectors$d.open);
+        this.buttonPopupOpen = this.querySelector(selectors$b.open);
         this.a11y = window.theme.a11y;
         this.isAnimating = false;
         this.cookie = new PopupCookie(this.popup.getAttribute(attributes$8.cookieName), this.popup.getAttribute(attributes$8.cookieValue));
@@ -4506,7 +4819,7 @@
         });
 
         // Close button click event
-        this.popup.querySelectorAll(selectors$d.close)?.forEach((closeButton) => {
+        this.popup.querySelectorAll(selectors$b.close)?.forEach((closeButton) => {
           closeButton.addEventListener('click', (e) => {
             e.preventDefault();
             this.popupClose();
@@ -4558,7 +4871,7 @@
             this.a11y.trapFocus(this.popup);
           }
 
-          const focusTarget = this.popup.querySelector('[autofocus]') || this.popup.querySelector(selectors$d.focusable);
+          const focusTarget = this.popup.querySelector('[autofocus]') || this.popup.querySelector(selectors$b.focusable);
           focusTarget?.focus();
         });
       }
@@ -4619,6 +4932,11 @@
 
         this.delay = this.popup.hasAttribute(attributes$8.delay) ? this.popup.getAttribute(attributes$8.delay) : null;
         this.isSubmitted = window.location.href.indexOf('accepts_marketing') !== -1 || window.location.href.indexOf('customer_posted=true') !== -1;
+
+        if (this.showOnScrollEvent) {
+          document.removeEventListener('theme:scroll', this.showOnScrollEvent);
+        }
+
         this.showOnScrollEvent = window.theme.throttle(this.showOnScroll.bind(this), 200);
 
         if (this.delay === 'always' || this.isSubmitted) {
@@ -4706,19 +5024,19 @@
     class PopupNewsletter extends PopupComponent {
       constructor() {
         super();
-        this.form = this.popup.querySelector(selectors$d.newsletterForm);
-        this.heading = this.popup.querySelector(selectors$d.newsletterHeading);
-        this.newsletterField = this.popup.querySelector(selectors$d.newsletterField);
+        this.form = this.popup.querySelector(selectors$b.newsletterForm);
+        this.heading = this.popup.querySelector(selectors$b.newsletterHeading);
+        this.newsletterField = this.popup.querySelector(selectors$b.newsletterField);
       }
 
       connectedCallback() {
         const cookieExists = this.cookie?.read() !== false;
         const submissionSuccess = window.location.search.indexOf('?customer_posted=true') !== -1;
         const classesString = [...this.classList].toString();
-        const isPositionBottom = classesString.includes(classes$a.bottom);
-        const targetMobile = this.popup.classList.contains(classes$a.mobile);
-        const targetDesktop = this.popup.classList.contains(classes$a.desktop);
-        const isMobileView = window.theme.isMobile();
+        const isPositionBottom = classesString.includes(classes$8.bottom);
+        const targetMobile = this.popup.classList.contains(classes$8.mobile);
+        const targetDesktop = this.popup.classList.contains(classes$8.desktop);
+        const isMobileView = theme.isMobile;
 
         let targetMatches = true;
 
@@ -4737,7 +5055,7 @@
             super.showPopupEvents();
           }
 
-          if (this.form && this.form.classList.contains(classes$a.success)) {
+          if (this.form && this.form.classList.contains(classes$8.success)) {
             super.popupOpen();
             this.cookie.write();
           }
@@ -4752,7 +5070,7 @@
         if (!cookieExists || window.Shopify.designMode) {
           this.show();
 
-          if (this.form.classList.contains(classes$a.success)) {
+          if (this.form.classList.contains(classes$8.success)) {
             this.popupOpen();
             this.cookie.write();
           }
@@ -4779,20 +5097,20 @@
       }
 
       observeCartBar() {
-        this.cartBar = document.getElementById(selectors$d.cartBar);
+        this.cartBar = document.getElementById(selectors$b.cartBar);
 
         if (!this.cartBar) return;
 
         const config = {attributes: true, childList: false, subtree: false};
-        let isVisible = this.cartBar.classList.contains(classes$a.isVisible);
-        document.body.classList.toggle(classes$a.cartBarVisible, isVisible);
+        let isVisible = this.cartBar.classList.contains(classes$8.isVisible);
+        document.body.classList.toggle(classes$8.cartBarVisible, isVisible);
 
         // Callback function to execute when mutations are observed
         const callback = (mutationList) => {
           for (const mutation of mutationList) {
             if (mutation.type === 'attributes') {
-              isVisible = mutation.target.classList.contains(classes$a.isVisible);
-              document.body.classList.toggle(classes$a.cartBarVisible, isVisible);
+              isVisible = mutation.target.classList.contains(classes$8.isVisible);
+              document.body.classList.toggle(classes$8.cartBarVisible, isVisible);
             }
           }
         };
@@ -4805,8 +5123,8 @@
         this.heading?.addEventListener('click', (event) => {
           event.preventDefault();
 
-          this.heading.classList.add(classes$a.hidden);
-          this.form.classList.remove(classes$a.hidden);
+          this.heading.classList.add(classes$8.hidden);
+          this.form.classList.remove(classes$8.hidden);
           this.newsletterField.focus();
         });
 
@@ -4825,7 +5143,7 @@
           }
 
           if (this.newsletterField.value !== '') {
-            this.popup.classList.add(classes$a.hasValue);
+            this.popup.classList.add(classes$8.hasValue);
           }
         };
 
@@ -4837,7 +5155,7 @@
 
           // Reset class
           this.resetClassTimer = setTimeout(() => {
-            this.popup.classList.remove(classes$a.hasValue);
+            this.popup.classList.remove(classes$8.hasValue);
           }, 2000);
         };
 
@@ -4861,7 +5179,7 @@
       customElements.define('popup-newsletter', PopupNewsletter);
     }
 
-    const selectors$c = {
+    const selectors$a = {
       allVisibleElements: '[role="option"]',
       ariaSelected: '[aria-selected="true"]',
       popularSearches: '[data-popular-searches]',
@@ -4888,13 +5206,13 @@
 
             this.a11y = window.theme.a11y;
             this.abortController = new AbortController();
-            this.allPredictiveSearchInstances = document.querySelectorAll(selectors$c.predictiveSearch);
+            this.allPredictiveSearchInstances = document.querySelectorAll(selectors$a.predictiveSearch);
             this.cachedResults = {};
-            this.input = this.querySelector(selectors$c.searchInput);
+            this.input = this.querySelector(selectors$a.searchInput);
             this.isOpen = false;
-            this.predictiveSearchResults = this.querySelector(selectors$c.predictiveSearchResults);
-            this.searchPopdown = this.closest(selectors$c.searchPopdown);
-            this.popularSearches = this.searchPopdown?.querySelector(selectors$c.popularSearches);
+            this.predictiveSearchResults = this.querySelector(selectors$a.predictiveSearchResults);
+            this.searchPopdown = this.closest(selectors$a.searchPopdown);
+            this.popularSearches = this.searchPopdown?.querySelector(selectors$a.popularSearches);
             this.searchTerm = '';
           }
 
@@ -4918,7 +5236,7 @@
             if (!this.searchTerm || !newSearchTerm.startsWith(this.searchTerm)) {
               // Remove the results when they are no longer relevant for the new search term
               // so they don't show up when the dropdown opens again
-              this.querySelector(selectors$c.searchResultsGroupsWrapper)?.remove();
+              this.querySelector(selectors$a.searchResultsGroupsWrapper)?.remove();
             }
 
             // Update the term asap, don't wait for the predictive search query to finish loading
@@ -4935,7 +5253,7 @@
           }
 
           onFormSubmit(event) {
-            if (!this.getQuery().length || this.querySelector(selectors$c.selectedLink)) event.preventDefault();
+            if (!this.getQuery().length || this.querySelector(selectors$a.selectedLink)) event.preventDefault();
           }
 
           onFormReset(event) {
@@ -4949,7 +5267,7 @@
           }
 
           shouldResetForm() {
-            return !document.querySelector(selectors$c.selectedLink);
+            return !document.querySelector(selectors$a.selectedLink);
           }
 
           onFocus() {
@@ -4969,7 +5287,7 @@
 
           onFocusOut() {
             setTimeout(() => {
-              if (!this.contains(document.activeElement)) this.close();
+              if (!this.searchPopdown.contains(document.activeElement)) this.close();
             });
           }
 
@@ -4998,7 +5316,7 @@
           }
 
           updateSearchForTerm(previousTerm, newTerm) {
-            const searchForTextElement = this.querySelector(selectors$c.searchForText);
+            const searchForTextElement = this.querySelector(selectors$a.searchForText);
             const currentButtonText = searchForTextElement?.innerText;
 
             if (currentButtonText) {
@@ -5015,11 +5333,11 @@
             if (!this.getAttribute('open')) return;
 
             const moveUp = direction === 'up';
-            const selectedElement = this.querySelector(selectors$c.ariaSelected);
+            const selectedElement = this.querySelector(selectors$a.ariaSelected);
 
             // Filter out hidden elements (duplicated page and article resources) thanks
             // to this https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetParent
-            const allVisibleElements = Array.from(this.querySelectorAll(selectors$c.allVisibleElements)).filter((element) => element.offsetParent !== null);
+            const allVisibleElements = Array.from(this.querySelectorAll(selectors$a.allVisibleElements)).filter((element) => element.offsetParent !== null);
 
             let activeElementIndex = 0;
 
@@ -5054,7 +5372,7 @@
           }
 
           selectOption() {
-            const selectedOption = this.querySelector(selectors$c.selectedOption);
+            const selectedOption = this.querySelector(selectors$a.selectedOption);
 
             if (selectedOption) selectedOption.click();
           }
@@ -5079,7 +5397,7 @@
                 return response.text();
               })
               .then((text) => {
-                const resultsMarkup = new DOMParser().parseFromString(text, 'text/html').querySelector(selectors$c.sectionPredictiveSearch).innerHTML;
+                const resultsMarkup = new DOMParser().parseFromString(text, 'text/html').querySelector(selectors$a.sectionPredictiveSearch).innerHTML;
                 // Save bandwidth keeping the cache in all instances synced
                 this.allPredictiveSearchInstances.forEach((predictiveSearchInstance) => {
                   predictiveSearchInstance.cachedResults[queryKey] = resultsMarkup;
@@ -5097,7 +5415,7 @@
           }
 
           setLiveRegionLoadingState() {
-            this.statusElement = this.statusElement || this.querySelector(selectors$c.predictiveSearchStatus);
+            this.statusElement = this.statusElement || this.querySelector(selectors$a.predictiveSearchStatus);
             this.loadingText = this.loadingText || this.getAttribute('data-loading-text');
 
             this.setLiveRegionText(this.loadingText);
@@ -5124,20 +5442,20 @@
 
           setLiveRegionResults() {
             this.removeAttribute('loading');
-            this.setLiveRegionText(this.querySelector(selectors$c.searchResultsLiveRegion).textContent);
+            this.setLiveRegionText(this.querySelector(selectors$a.searchResultsLiveRegion).textContent);
           }
 
           open() {
             this.setAttribute('open', true);
             this.input.setAttribute('aria-expanded', true);
             this.isOpen = true;
-            this.predictiveSearchResults.style.setProperty('--full-screen', `${window.visualViewport.height}px`);
+            this.predictiveSearchResults.style.setProperty('--results-height', `${window.visualViewport.height - this.predictiveSearchResults.getBoundingClientRect().top}px`);
           }
 
           close(clearSearchTerm = false) {
             this.closeResults(clearSearchTerm);
             this.isOpen = false;
-            this.predictiveSearchResults.style.removeProperty('--full-screen');
+            this.predictiveSearchResults.style.removeProperty('--results-height');
           }
 
           closeResults(clearSearchTerm = false) {
@@ -5145,7 +5463,7 @@
               this.input.value = '';
               this.removeAttribute('results');
             }
-            const selected = this.querySelector(selectors$c.ariaSelected);
+            const selected = this.querySelector(selectors$a.ariaSelected);
 
             if (selected) selected.setAttribute('aria-selected', false);
 
@@ -5173,1188 +5491,58 @@
       );
     }
 
-    function Listeners() {
-      this.entries = [];
-    }
-
-    Listeners.prototype.add = function (element, event, fn) {
-      this.entries.push({element: element, event: event, fn: fn});
-      element.addEventListener(event, fn);
-    };
-
-    Listeners.prototype.removeAll = function () {
-      this.entries = this.entries.filter(function (listener) {
-        listener.element.removeEventListener(listener.event, listener.fn);
-        return false;
-      });
-    };
-
-    /**
-     * Convert the Object (with 'name' and 'value' keys) into an Array of values, then find a match & return the variant (as an Object)
-     * @param {Object} product Product JSON object
-     * @param {Object} collection Object with 'name' and 'value' keys (e.g. [{ name: "Size", value: "36" }, { name: "Color", value: "Black" }])
-     * @returns {Object || null} The variant object once a match has been successful. Otherwise null will be returned
-     */
-    function getVariantFromSerializedArray(product, collection) {
-      _validateProductStructure(product);
-
-      // If value is an array of options
-      var optionArray = _createOptionArrayFromOptionCollection(product, collection);
-      return getVariantFromOptionArray(product, optionArray);
-    }
-
-    /**
-     * Find a match in the project JSON (using Array with option values) and return the variant (as an Object)
-     * @param {Object} product Product JSON object
-     * @param {Array} options List of submitted values (e.g. ['36', 'Black'])
-     * @returns {Object || null} The variant object once a match has been successful. Otherwise null will be returned
-     */
-    function getVariantFromOptionArray(product, options) {
-      _validateProductStructure(product);
-      _validateOptionsArray(options);
-
-      var result = product.variants.filter(function (variant) {
-        return options.every(function (option, index) {
-          return variant.options[index] === option;
-        });
-      });
-
-      return result[0] || null;
-    }
-
-    /**
-     * Creates an array of selected options from the object
-     * Loops through the project.options and check if the "option name" exist (product.options.name) and matches the target
-     * @param {Object} product Product JSON object
-     * @param {Array} collection Array of object (e.g. [{ name: "Size", value: "36" }, { name: "Color", value: "Black" }])
-     * @returns {Array} The result of the matched values. (e.g. ['36', 'Black'])
-     */
-    function _createOptionArrayFromOptionCollection(product, collection) {
-      _validateProductStructure(product);
-      _validateSerializedArray(collection);
-
-      var optionArray = [];
-
-      collection.forEach(function (option) {
-        for (var i = 0; i < product.options.length; i++) {
-          var name = product.options[i].name || product.options[i];
-          if (name.toLowerCase() === option.name.toLowerCase()) {
-            optionArray[i] = option.value;
-            break;
-          }
-        }
-      });
-
-      return optionArray;
-    }
-
-    /**
-     * Check if the product data is a valid JS object
-     * Error will be thrown if type is invalid
-     * @param {object} product Product JSON object
-     */
-    function _validateProductStructure(product) {
-      if (typeof product !== 'object') {
-        throw new TypeError(product + ' is not an object.');
-      }
-
-      if (Object.keys(product).length === 0 && product.constructor === Object) {
-        throw new Error(product + ' is empty.');
-      }
-    }
-
-    /**
-     * Validate the structure of the array
-     * It must be formatted like jQuery's serializeArray()
-     * @param {Array} collection Array of object [{ name: "Size", value: "36" }, { name: "Color", value: "Black" }]
-     */
-    function _validateSerializedArray(collection) {
-      if (!Array.isArray(collection)) {
-        throw new TypeError(collection + ' is not an array.');
-      }
-
-      if (collection.length === 0) {
-        throw new Error(collection + ' is empty.');
-      }
-
-      if (collection[0].hasOwnProperty('name')) {
-        if (typeof collection[0].name !== 'string') {
-          throw new TypeError('Invalid value type passed for name of option ' + collection[0].name + '. Value should be string.');
-        }
-      } else {
-        throw new Error(collection[0] + 'does not contain name key.');
-      }
-    }
-
-    /**
-     * Validate the structure of the array
-     * It must be formatted as list of values
-     * @param {Array} collection Array of object (e.g. ['36', 'Black'])
-     */
-    function _validateOptionsArray(options) {
-      if (Array.isArray(options) && typeof options[0] === 'object') {
-        throw new Error(options + 'is not a valid array of options.');
-      }
-    }
-
-    var selectors$b = {
-      idInput: '[name="id"]',
-      planInput: '[name="selling_plan"]',
-      optionInput: '[name^="options"]',
-      quantityInput: '[name="quantity"]',
-      propertyInput: '[name^="properties"]',
-    };
-
-    // Public Methods
-    // -----------------------------------------------------------------------------
-
-    /**
-     * Returns a URL with a variant ID query parameter. Useful for updating window.history
-     * with a new URL based on the currently select product variant.
-     * @param {string} url - The URL you wish to append the variant ID to
-     * @param {number} id  - The variant ID you wish to append to the URL
-     * @returns {string} - The new url which includes the variant ID query parameter
-     */
-
-    function getUrlWithVariant(url, id) {
-      if (/variant=/.test(url)) {
-        return url.replace(/(variant=)[^&]+/, '$1' + id);
-      } else if (/\?/.test(url)) {
-        return url.concat('&variant=').concat(id);
-      }
-
-      return url.concat('?variant=').concat(id);
-    }
-
-    /**
-     * Constructor class that creates a new instance of a product form controller.
-     *
-     * @param {Element} element - DOM element which is equal to the <form> node wrapping product form inputs
-     * @param {Object} product - A product object
-     * @param {Object} options - Optional options object
-     * @param {Function} options.onOptionChange - Callback for whenever an option input changes
-     * @param {Function} options.onPlanChange - Callback for changes to name=selling_plan
-     * @param {Function} options.onQuantityChange - Callback for whenever an quantity input changes
-     * @param {Function} options.onPropertyChange - Callback for whenever a property input changes
-     * @param {Function} options.onFormSubmit - Callback for whenever the product form is submitted
-     */
-    class ProductFormReader {
-      constructor(element, product, options) {
-        this.element = element;
-        this.product = this._validateProductObject(product);
-        this.variantElement = this.element.querySelector(selectors$b.idInput);
-
-        options = options || {};
-
-        this._listeners = new Listeners();
-        this._listeners.add(this.element, 'submit', this._onSubmit.bind(this, options));
-
-        this.optionInputs = this._initInputs(selectors$b.optionInput, options.onOptionChange);
-
-        this.planInputs = this._initInputs(selectors$b.planInput, options.onPlanChange);
-
-        this.quantityInputs = this._initInputs(selectors$b.quantityInput, options.onQuantityChange);
-
-        this.propertyInputs = this._initInputs(selectors$b.propertyInput, options.onPropertyChange);
-      }
-
-      /**
-       * Cleans up all event handlers that were assigned when the Product Form was constructed.
-       * Useful for use when a section needs to be reloaded in the theme editor.
-       */
-      destroy() {
-        this._listeners.removeAll();
-      }
-
-      /**
-       * Getter method which returns the array of currently selected option values
-       *
-       * @returns {Array} An array of option values
-       */
-      options() {
-        return this._serializeInputValues(this.optionInputs, function (item) {
-          var regex = /(?:^(options\[))(.*?)(?:\])/;
-          item.name = regex.exec(item.name)[2]; // Use just the value between 'options[' and ']'
-          return item;
-        });
-      }
-
-      /**
-       * Getter method which returns the currently selected variant, or `null` if variant
-       * doesn't exist.
-       *
-       * @returns {Object|null} Variant object
-       */
-      variant() {
-        const opts = this.options();
-        if (opts.length) {
-          return getVariantFromSerializedArray(this.product, opts);
-        } else {
-          return this.product.variants[0];
-        }
-      }
-
-      /**
-       * Getter method which returns the current selling plan, or `null` if plan
-       * doesn't exist.
-       *
-       * @returns {Object|null} Variant object
-       */
-      plan(variant) {
-        let plan = {
-          allocation: null,
-          group: null,
-          detail: null,
-        };
-        const sellingPlanChecked = this.element.querySelector(`${selectors$b.planInput}:checked`);
-        if (!sellingPlanChecked) return null;
-        const sellingPlanCheckedValue = sellingPlanChecked.value;
-        const id = sellingPlanCheckedValue && sellingPlanCheckedValue !== '' ? sellingPlanCheckedValue : null;
-
-        if (id && variant) {
-          plan.allocation = variant.selling_plan_allocations.find(function (item) {
-            return item.selling_plan_id.toString() === id.toString();
-          });
-        }
-        if (plan.allocation) {
-          plan.group = this.product.selling_plan_groups.find(function (item) {
-            return item.id.toString() === plan.allocation.selling_plan_group_id.toString();
-          });
-        }
-        if (plan.group) {
-          plan.detail = plan.group.selling_plans.find(function (item) {
-            return item.id.toString() === id.toString();
-          });
-        }
-
-        if (plan && plan.allocation && plan.detail && plan.allocation) {
-          return plan;
-        } else return null;
-      }
-
-      /**
-       * Getter method which returns a collection of objects containing name and values
-       * of property inputs
-       *
-       * @returns {Array} Collection of objects with name and value keys
-       */
-      properties() {
-        return this._serializeInputValues(this.propertyInputs, function (item) {
-          var regex = /(?:^(properties\[))(.*?)(?:\])/;
-          item.name = regex.exec(item.name)[2]; // Use just the value between 'properties[' and ']'
-          return item;
-        });
-      }
-
-      /**
-       * Getter method which returns the current quantity or 1 if no quantity input is
-       * included in the form
-       *
-       * @returns {Array} Collection of objects with name and value keys
-       */
-      quantity() {
-        return this.quantityInputs[0] ? Number.parseInt(this.quantityInputs[0].value, 10) : 1;
-      }
-
-      getFormState() {
-        const variant = this.variant();
-        return {
-          options: this.options(),
-          variant: variant,
-          properties: this.properties(),
-          quantity: this.quantity(),
-          plan: this.plan(variant),
-        };
-      }
-
-      // Private Methods
-      // -----------------------------------------------------------------------------
-      _setIdInputValue(variant) {
-        if (variant && variant.id) {
-          this.variantElement.value = variant.id.toString();
-        } else {
-          this.variantElement.value = '';
-        }
-
-        this.variantElement.dispatchEvent(new Event('change'));
-      }
-
-      _onSubmit(options, event) {
-        event.dataset = this.getFormState();
-        if (options.onFormSubmit) {
-          options.onFormSubmit(event);
-        }
-      }
-
-      _onOptionChange(event) {
-        this._setIdInputValue(event.dataset.variant);
-      }
-
-      _onFormEvent(cb) {
-        if (typeof cb === 'undefined') {
-          return Function.prototype.bind();
-        }
-
-        return function (event) {
-          event.dataset = this.getFormState();
-          this._setIdInputValue(event.dataset.variant);
-          cb(event);
-        }.bind(this);
-      }
-
-      _initInputs(selector, cb) {
-        var elements = Array.prototype.slice.call(this.element.querySelectorAll(selector));
-
-        return elements.map(
-          function (element) {
-            this._listeners.add(element, 'change', this._onFormEvent(cb));
-            return element;
-          }.bind(this)
-        );
-      }
-
-      _serializeInputValues(inputs, transform) {
-        return inputs.reduce(function (options, input) {
-          if (
-            input.checked || // If input is a checked (means type radio or checkbox)
-            (input.type !== 'radio' && input.type !== 'checkbox') // Or if its any other type of input
-          ) {
-            options.push(transform({name: input.name, value: input.value}));
-          }
-
-          return options;
-        }, []);
-      }
-
-      _validateProductObject(product) {
-        if (typeof product !== 'object') {
-          throw new TypeError(product + ' is not an object.');
-        }
-
-        if (typeof product.variants[0].options === 'undefined') {
-          throw new TypeError('Product object is invalid. Make sure you use the product object that is output from {{ product | json }} or from the http://[your-product-url].js route');
-        }
-        return product;
-      }
-    }
-
-    const selectors$a = {
-      optionPosition: 'data-option-position',
-      optionInput: '[name^="options"], [data-popout-option]',
-      optionInputCurrent: '[name^="options"]:checked, [name^="options"][type="hidden"]',
-      selectOptionValue: 'data-value',
-      popout: '[data-popout]',
-    };
-
-    const classes$9 = {
-      soldOut: 'sold-out',
-      unavailable: 'unavailable',
-      sale: 'sale',
-    };
-
-    /**
-     * Variant Sellout Precrime Click Preview
-     * I think of this like the precrime machine in Minority report.  It gives a preview
-     * of every possible click action, given the current form state.  The logic is:
-     *
-     * for each clickable name=options[] variant selection element
-     * find the value of the form if the element were clicked
-     * lookup the variant with those value in the product json
-     * clear the classes, add .unavailable if it's not found,
-     * and add .sold-out if it is out of stock
-     *
-     * Caveat: we rely on the option position so we don't need
-     * to keep a complex map of keys and values.
-     */
-
-    class SelloutVariants {
-      constructor(section, productJSON) {
-        this.container = section;
-        this.productJSON = productJSON;
-        this.optionElements = this.container.querySelectorAll(selectors$a.optionInput);
-
-        if (this.productJSON && this.optionElements.length) {
-          this.init();
-        }
-      }
-
-      init() {
-        this.update();
-      }
-
-      update() {
-        this.getCurrentState();
-
-        this.optionElements.forEach((el) => {
-          const parent = el.closest(`[${selectors$a.optionPosition}]`);
-          if (!parent) return;
-          const val = el.value || el.getAttribute(selectors$a.selectOptionValue);
-          const positionString = parent.getAttribute(selectors$a.optionPosition);
-          // subtract one because option.position in liquid does not count form zero, but JS arrays do
-          const position = parseInt(positionString, 10) - 1;
-          const selectPopout = el.closest(selectors$a.popout);
-
-          let newVals = [...this.selections];
-          newVals[position] = val;
-
-          const found = this.productJSON.variants.find((element) => {
-            // only return true if every option matches our hypothetical selection
-            let perfectMatch = true;
-            for (let index = 0; index < newVals.length; index++) {
-              if (element.options[index] !== newVals[index]) {
-                perfectMatch = false;
-              }
-            }
-            return perfectMatch;
-          });
-
-          el.classList.remove(classes$9.soldOut, classes$9.unavailable);
-          el.parentNode.classList.remove(classes$9.sale);
-
-          if (selectPopout) {
-            selectPopout.classList.remove(classes$9.soldOut, classes$9.unavailable, classes$9.sale);
-          }
-
-          if (typeof found === 'undefined') {
-            el.classList.add(classes$9.unavailable);
-
-            if (selectPopout) {
-              selectPopout.classList.add(classes$9.unavailable);
-            }
-          } else if (found && found.available === false) {
-            el.classList.add(classes$9.soldOut);
-
-            if (selectPopout) {
-              selectPopout.classList.add(classes$9.soldOut);
-            }
-          }
-
-          if (found && found.compare_at_price > found.price && theme.settings.variantOnSale) {
-            el.parentNode.classList.add(classes$9.sale);
-          }
-        });
-      }
-
-      getCurrentState() {
-        this.selections = [];
-
-        const options = this.container.querySelectorAll(selectors$a.optionInputCurrent);
-        if (options.length) {
-          options.forEach((element) => {
-            const elemValue = element.value;
-            if (elemValue && elemValue !== '') {
-              this.selections.push(elemValue);
-            }
-          });
-        }
-      }
-    }
-
-    const selectors$9 = {
-      product: '[data-product]',
-      productForm: '[data-product-form]',
-      productNotification: 'product-notification',
-      variantTitle: '[data-variant-title]',
-      notificationProduct: '[data-notification-product]',
-      addToCart: '[data-add-to-cart]',
-      addToCartText: '[data-add-to-cart-text]',
-      cartPage: '[data-cart-page]',
-      comparePrice: '[data-compare-price]',
-      comparePriceText: '[data-compare-text]',
-      finalSaleBadge: '[data-final-sale-badge]',
-      formWrapper: '[data-form-wrapper]',
-      originalSelectorId: '[data-product-select]',
-      priceWrapper: '[data-price-wrapper]',
-      productImages: 'product-images',
-      productImage: '[data-product-image]',
-      productMediaList: '[data-product-media-list]',
-      productJson: '[data-product-json]',
-      productPrice: '[data-product-price]',
-      unitPrice: '[data-product-unit-price]',
-      unitBase: '[data-product-base]',
-      unitWrapper: '[data-product-unit]',
-      isPreOrder: '[data-product-preorder]',
-      productSlide: '.product__slide',
-      subPrices: '[data-subscription-watch-price]',
-      subSelectors: '[data-subscription-selectors]',
-      subsToggle: '[data-toggles-group]',
-      subsChild: 'data-group-toggle',
-      subDescription: '[data-plan-description]',
-      section: '[data-section-type]',
-      variantSku: '[data-variant-sku]',
-      variantFinalSaleMeta: '[data-variant-final-sale-metafield]',
-      variantButtons: '[data-variant-buttons]',
-      variantOptionImage: '[data-variant-option-image]',
-      quickAddModal: '[data-quick-add-modal]',
-      priceOffAmount: '[data-price-off-amount]',
-      priceOffBadge: '[data-price-off-badge]',
-      priceOffType: '[data-price-off-type]',
-      priceOffWrap: '[data-price-off]',
-      remainingCount: '[data-remaining-count]',
-      remainingMax: '[data-remaining-max]',
-      remainingWrapper: '[data-remaining-wrapper]',
-      remainingJSON: '[data-product-remaining-json]',
-      optionValue: '[data-option-value]',
-      optionPosition: '[data-option-position]',
-      installment: '[data-product-form-installment]',
-      inputId: 'input[name="id"]',
-    };
-
-    const classes$8 = {
-      hidden: 'hidden',
-      variantSoldOut: 'variant--soldout',
-      variantUnavailable: 'variant--unavailable',
-      productPriceSale: 'product__price--sale',
-      remainingLow: 'count-is-low',
-      remainingIn: 'count-is-in',
-      remainingOut: 'count-is-out',
-      remainingUnavailable: 'count-is-unavailable',
-    };
-
-    const attributes$7 = {
-      remainingMaxAttr: 'data-remaining-max',
-      enableHistoryState: 'data-enable-history-state',
-      notificationPopup: 'data-notification-popup',
-      faderDesktop: 'data-fader-desktop',
-      faderMobile: 'data-fader-mobile',
-      optionPosition: 'data-option-position',
-      imageId: 'data-image-id',
-      mediaId: 'data-media-id',
-      quickAddButton: 'data-quick-add-btn',
-      finalSale: 'data-final-sale',
-      variantImageScroll: 'data-variant-image-scroll',
-    };
-
     if (!customElements.get('product-form')) {
       customElements.define(
         'product-form',
-
         class ProductForm extends HTMLElement {
           constructor() {
             super();
+
+            this.form = this.querySelector('form');
+            this.variantIdInput.disabled = false;
+            this.form.addEventListener('submit', this.onSubmitHandler.bind(this));
+            this.cart = document.querySelector('cart-drawer');
+            this.submitButton = this.querySelector('[type="submit"]');
+            this.submitButtonText = this.submitButton.querySelector('[data-add-to-cart-text]');
+
+            if (document.querySelector('cart-drawer')) this.submitButton.setAttribute('aria-haspopup', 'dialog');
+
+            this.hideErrors = this.dataset.hideErrors === 'true';
           }
 
-          connectedCallback() {
-            this.cartAddEvents();
-
-            this.container = this.closest(selectors$9.section) || this.closest(selectors$9.quickAddModal);
-            if (!this.container) return;
-
-            this.sectionId = this.container.dataset.sectionId;
-            this.product = this.container.querySelector(selectors$9.product);
-            this.productForm = this.container.querySelector(selectors$9.productForm);
-            this.productNotification = this.container.querySelector(selectors$9.productNotification);
-            this.productImages = this.container.querySelector(selectors$9.productImages);
-            this.productMediaList = this.container.querySelector(selectors$9.productMediaList);
-            this.installmentForm = this.container.querySelector(selectors$9.installment);
-            this.skuWrapper = this.container.querySelector(selectors$9.variantSku);
-            this.sellout = null;
-            this.variantImageScroll = this.container.getAttribute(attributes$7.variantImageScroll) === 'true';
-
-            this.priceOffWrap = this.container.querySelector(selectors$9.priceOffWrap);
-            this.priceOffAmount = this.container.querySelector(selectors$9.priceOffAmount);
-            this.priceOffType = this.container.querySelector(selectors$9.priceOffType);
-            this.planDescription = this.container.querySelector(selectors$9.subDescription);
-
-            this.remainingWrapper = this.container.querySelector(selectors$9.remainingWrapper);
-
-            if (this.remainingWrapper) {
-              const remainingMaxWrap = this.container.querySelector(selectors$9.remainingMax);
-              if (remainingMaxWrap) {
-                this.remainingMaxInt = parseInt(remainingMaxWrap.getAttribute(attributes$7.remainingMaxAttr), 10);
-                this.remainingCount = this.container.querySelector(selectors$9.remainingCount);
-                this.remainingJSONWrapper = this.container.querySelector(selectors$9.remainingJSON);
-                this.remainingJSON = null;
-
-                if (this.remainingJSONWrapper && this.remainingJSONWrapper.innerHTML !== '') {
-                  this.remainingJSON = JSON.parse(this.remainingJSONWrapper.innerHTML);
-                } else {
-                  console.warn('Missing product quantity JSON');
-                }
-              }
-            }
-
-            this.enableHistoryState = this.container.getAttribute(attributes$7.enableHistoryState) === 'true';
-            this.hasUnitPricing = this.container.querySelector(selectors$9.unitWrapper);
-            this.subSelectors = this.container.querySelector(selectors$9.subSelectors);
-            this.subPrices = this.container.querySelector(selectors$9.subPrices);
-            this.isPreOrder = this.container.querySelector(selectors$9.isPreOrder);
-
-            let productJSON = null;
-            const productElemJSON = this.container.querySelector(selectors$9.productJson);
-            if (productElemJSON) {
-              productJSON = productElemJSON.innerHTML;
-            }
-            if (productJSON) {
-              this.productJSON = JSON.parse(productJSON);
-              this.linkForm();
-              this.sellout = new SelloutVariants(this.container, this.productJSON);
-            } else {
-              console.error('Missing product JSON');
-            }
-
-            this.variantOptionImages = this.container.querySelectorAll(selectors$9.variantOptionImage);
-            this.variantButtons = this.container.querySelectorAll(selectors$9.variantButtons);
-            if (this.variantOptionImages.length > 1) {
-              this.optionImagesWidth();
-            }
-          }
-
-          cartAddEvents() {
-            this.buttonATC = this.querySelector(selectors$9.addToCart);
-
-            this.buttonATC.addEventListener('click', (e) => {
-              e.preventDefault();
-
-              document.dispatchEvent(
-                new CustomEvent('theme:cart:add', {
-                  detail: {
-                    button: this.buttonATC,
-                  },
-                  bubbles: false,
-                })
-              );
-
-              if (!this.closest(selectors$9.quickAddModal)) {
-                window.a11y.lastElement = this.buttonATC;
-              }
-            });
-          }
-
-          destroy() {
-            this.productForm.destroy();
-          }
-
-          linkForm() {
-            this.productForm = new ProductFormReader(this.container, this.productJSON, {
-              onOptionChange: this.onOptionChange.bind(this),
-              onPlanChange: this.onPlanChange.bind(this),
-            });
-            this.pushState(this.productForm.getFormState(), true);
-            this.subsToggleListeners();
-          }
-
-          onOptionChange(evt) {
-            this.pushState(evt.dataset);
-          }
-
-          onPlanChange(evt) {
-            if (this.subPrices) {
-              this.pushState(evt.dataset);
-            }
-          }
-
-          pushState(formState, init = false) {
-            this.productState = this.setProductState(formState);
-            this.updateAddToCartState(formState);
-            this.updateNotificationForm(formState);
-            this.updateProductPrices(formState);
-            this.updateProductImage(formState);
-            this.updateSaleText(formState);
-            this.updateSku(formState);
-            this.updateSubscriptionText(formState);
-            this.updateRemaining(formState);
-            this.updateLegend(formState);
-            this.fireHookEvent(formState);
-            this.sellout?.update(formState);
-
-            if (this.enableHistoryState && !init) {
-              this.updateHistoryState(formState);
-            }
-          }
-
-          updateAddToCartState(formState) {
-            const variant = formState.variant;
-            let addText = theme.strings.addToCart;
-            const priceWrapper = this.container.querySelectorAll(selectors$9.priceWrapper);
-            const addToCart = this.container.querySelectorAll(selectors$9.addToCart);
-            const addToCartText = this.container.querySelectorAll(selectors$9.addToCartText);
-            const formWrapper = this.container.querySelectorAll(selectors$9.formWrapper);
-
-            if (this.installmentForm && variant) {
-              const installmentInput = this.installmentForm.querySelector(selectors$9.inputId);
-              installmentInput.value = variant.id;
-              installmentInput.dispatchEvent(new Event('change', {bubbles: true}));
-            }
-
-            if (this.isPreOrder) {
-              addText = theme.strings.preOrder;
-            }
-
-            if (priceWrapper.length && variant) {
-              priceWrapper.forEach((element) => {
-                element.classList.remove(classes$8.hidden);
-              });
-            }
-
-            addToCart?.forEach((button) => {
-              if (button.hasAttribute(attributes$7.quickAddButton)) return;
-
-              if (variant) {
-                if (variant.available) {
-                  button.disabled = false;
-                } else {
-                  button.disabled = true;
-                }
-              } else {
-                button.disabled = true;
-              }
-            });
-
-            addToCartText?.forEach((element) => {
-              let btnText = addText;
-              if (variant) {
-                if (!variant.available) {
-                  btnText = theme.strings.soldOut;
-                }
-              } else {
-                btnText = theme.strings.unavailable;
-              }
-
-              element.textContent = btnText;
-            });
-
-            if (formWrapper.length) {
-              formWrapper.forEach((element) => {
-                if (variant) {
-                  if (variant.available) {
-                    element.classList.remove(classes$8.variantSoldOut, classes$8.variantUnavailable);
-                  } else {
-                    element.classList.add(classes$8.variantSoldOut);
-                    element.classList.remove(classes$8.variantUnavailable);
-                  }
-
-                  const formSelect = element.querySelector(selectors$9.originalSelectorId);
-                  if (formSelect) {
-                    formSelect.value = variant.id;
-                  }
-
-                  const inputId = element.querySelector(`${selectors$9.inputId}[form]`);
-                  if (inputId) {
-                    inputId.value = variant.id;
-                    inputId.dispatchEvent(new Event('change'));
-                  }
-                } else {
-                  element.classList.add(classes$8.variantUnavailable);
-                  element.classList.remove(classes$8.variantSoldOut);
-                }
-              });
-            }
-          }
-
-          updateNotificationForm(formState) {
-            if (!this.productNotification) return;
-
-            const variantTitle = this.productNotification.querySelector(selectors$9.variantTitle);
-            const notificationProduct = this.productNotification.querySelector(selectors$9.notificationProduct);
-            if (variantTitle != null) {
-              variantTitle.textContent = formState.variant.title;
-              notificationProduct.value = formState.variant.name;
-            }
-          }
-
-          updateHistoryState(formState) {
-            const variant = formState.variant;
-            const plan = formState.plan;
-            const location = window.location.href;
-            if (variant && location.includes('/product')) {
-              const url = new window.URL(location);
-              const params = url.searchParams;
-              params.set('variant', variant.id);
-              if (plan && plan.detail && plan.detail.id && this.productState.hasPlan) {
-                params.set('selling_plan', plan.detail.id);
-              } else {
-                params.delete('selling_plan');
-              }
-              url.search = params.toString();
-              const urlString = url.toString();
-              window.history.replaceState({path: urlString}, '', urlString);
-            }
-          }
-
-          updateRemaining(formState) {
-            const variant = formState.variant;
-
-            this.remainingWrapper?.classList.remove(classes$8.remainingIn, classes$8.remainingOut, classes$8.remainingUnavailable, classes$8.remainingLow);
-
-            if (variant && this.remainingWrapper && this.remainingJSON) {
-              const remaining = this.remainingJSON[variant.id];
-
-              if (remaining === 'out' || remaining < 1) {
-                this.remainingWrapper.classList.add(classes$8.remainingOut);
-              }
-
-              if (remaining === 'in' || remaining >= this.remainingMaxInt) {
-                this.remainingWrapper.classList.add(classes$8.remainingIn);
-              }
-
-              if (remaining === 'low' || (remaining > 0 && remaining < this.remainingMaxInt)) {
-                this.remainingWrapper.classList.add(classes$8.remainingLow);
-
-                if (this.remainingCount) {
-                  this.remainingCount.innerHTML = remaining;
-                }
-              }
-            } else if (!variant && this.remainingWrapper) {
-              this.remainingWrapper.classList.add(classes$8.remainingUnavailable);
-            }
-          }
-
-          optionImagesWidth() {
-            if (!this.variantButtons) return;
-
-            let maxItemWidth = 0;
-
-            requestAnimationFrame(() => {
-              this.variantOptionImages.forEach((item) => {
-                const itemWidth = item.clientWidth;
-                if (itemWidth > maxItemWidth) {
-                  maxItemWidth = itemWidth;
-                }
-              });
-
-              this.variantButtons.forEach((item) => {
-                item.style?.setProperty('--option-image-width', maxItemWidth + 'px');
-              });
-            });
-          }
-
-          getBaseUnit(variant) {
-            return variant.unit_price_measurement.reference_value === 1
-              ? variant.unit_price_measurement.reference_unit
-              : variant.unit_price_measurement.reference_value + variant.unit_price_measurement.reference_unit;
-          }
-
-          subsToggleListeners() {
-            const toggles = this.container.querySelectorAll(selectors$9.subsToggle);
-
-            toggles.forEach((toggle) => {
-              toggle.addEventListener(
-                'change',
-                function (e) {
-                  const val = e.target.value.toString();
-                  const selected = this.container.querySelector(`[${selectors$9.subsChild}="${val}"]`);
-                  const groups = this.container.querySelectorAll(`[${selectors$9.subsChild}]`);
-                  if (selected) {
-                    selected.classList.remove(classes$8.hidden);
-                    const first = selected.querySelector(`[name="selling_plan"]`);
-                    first.checked = true;
-                    first.dispatchEvent(new Event('change'));
-                  }
-                  groups.forEach((group) => {
-                    if (group !== selected) {
-                      group.classList.add(classes$8.hidden);
-                      const plans = group.querySelectorAll(`[name="selling_plan"]`);
-                      plans.forEach((plan) => {
-                        plan.checked = false;
-                        plan.dispatchEvent(new Event('change'));
-                      });
-                    }
-                  });
-                }.bind(this)
-              );
-            });
-          }
-
-          updateSaleText(formState) {
-            if (!this.priceOffWrap) return;
-
-            if (this.productState.planSale) {
-              this.updateSaleTextSubscription(formState);
-            } else if (this.productState.onSale) {
-              this.updateSaleTextStandard(formState);
-            } else {
-              this.priceOffWrap.classList.add(classes$8.hidden);
-            }
-          }
-
-          isVariantFinalSale(variant) {
-            const metafieldsData = document.querySelector(selectors$9.variantFinalSaleMeta)?.textContent;
-            if (!metafieldsData) return;
-
-            const variantsMetafields = JSON.parse(metafieldsData);
-            let variantIsFinalSale = false;
-
-            variantsMetafields.forEach((variantMetafield) => {
-              if (Number(variantMetafield.variant_id) === variant.id) {
-                variantIsFinalSale = variantMetafield.metafield_value === 'true';
-              }
-            });
-
-            return variantIsFinalSale;
-          }
-
-          updateSaleTextStandard(formState) {
-            const variant = formState.variant;
-            const finalSaleBadge = this.priceOffWrap?.querySelector(selectors$9.finalSaleBadge);
-            const priceOffBadge = this.priceOffWrap?.querySelector(selectors$9.priceOffBadge);
-            const comparePrice = variant?.compare_at_price;
-            const salePrice = variant?.price;
-
-            // Set sale type text if element exists
-            if (this.priceOffType) {
-              this.priceOffType.innerHTML = window.theme.strings.sale || 'sale';
-            }
-
-            // If priceOffBadge or priceOffAmount are missing, hide priceOffBadge and exit early
-            if (!priceOffBadge || !this.priceOffAmount || !comparePrice || comparePrice <= salePrice) {
-              priceOffBadge?.classList.add(classes$8.hidden);
-            } else {
-              // Calculate and display discount percentage
-              const discountInt = Math.round(((comparePrice - salePrice) / comparePrice) * 100);
-              this.priceOffAmount.innerHTML = `${discountInt}%`;
-              priceOffBadge.classList.remove(classes$8.hidden);
-            }
-
-            // Display or hide the final sale badge
-            const isFinalSale = this.priceOffWrap?.hasAttribute(attributes$7.finalSale) || this.isVariantFinalSale(variant);
-            if (finalSaleBadge) {
-              finalSaleBadge.classList.toggle(classes$8.hidden, !isFinalSale);
-            }
-
-            this.priceOffWrap.classList.remove(classes$8.hidden);
-          }
-
-          updateSubscriptionText(formState) {
-            if (formState.plan && this.planDescription) {
-              this.planDescription.innerHTML = formState.plan.detail.description;
-              this.planDescription.classList.remove(classes$8.hidden);
-            } else if (this.planDescription) {
-              this.planDescription.classList.add(classes$8.hidden);
-            }
-          }
-
-          updateSaleTextSubscription(formState) {
-            if (this.priceOffType) {
-              this.priceOffType.innerHTML = window.theme.strings.subscription || 'subscripton';
-            }
-
-            if (this.priceOffAmount && this.priceOffWrap) {
-              const adjustment = formState.plan.detail.price_adjustments[0];
-              const discount = adjustment.value;
-              if (adjustment && adjustment.value_type === 'percentage') {
-                this.priceOffAmount.innerHTML = `${discount}%`;
-              } else {
-                this.priceOffAmount.innerHTML = window.theme.formatMoney(discount, theme.moneyFormat);
-              }
-              this.priceOffWrap.classList.remove(classes$8.hidden);
-            }
-          }
-
-          updateProductPrices(formState) {
-            const variant = formState.variant;
-            const plan = formState.plan;
-            const priceWrappers = this.container.querySelectorAll(selectors$9.priceWrapper);
-
-            priceWrappers.forEach((wrap) => {
-              const comparePriceEl = wrap.querySelector(selectors$9.comparePrice);
-              const productPriceEl = wrap.querySelector(selectors$9.productPrice);
-              const comparePriceText = wrap.querySelector(selectors$9.comparePriceText);
-
-              let comparePrice = '';
-              let price = '';
-
-              if (this.productState.available) {
-                comparePrice = variant.compare_at_price;
-                price = variant.price;
-              }
-
-              if (this.productState.hasPlan) {
-                price = plan.allocation.price;
-              }
-
-              if (this.productState.planSale) {
-                comparePrice = plan.allocation.compare_at_price;
-                price = plan.allocation.price;
-              }
-
-              if (comparePriceEl) {
-                if (this.productState.onSale || this.productState.planSale) {
-                  comparePriceEl.classList.remove(classes$8.hidden);
-                  comparePriceText.classList.remove(classes$8.hidden);
-                  productPriceEl.classList.add(classes$8.productPriceSale);
-                } else {
-                  comparePriceEl.classList.add(classes$8.hidden);
-                  comparePriceText.classList.add(classes$8.hidden);
-                  productPriceEl.classList.remove(classes$8.productPriceSale);
-                }
-                comparePriceEl.innerHTML = window.theme.formatMoney(comparePrice, theme.moneyFormat);
-              }
-
-              productPriceEl.innerHTML = price === 0 ? window.theme.strings.free : window.theme.formatMoney(price, theme.moneyFormat);
-            });
-
-            if (this.hasUnitPricing) {
-              this.updateProductUnits(formState);
-            }
-          }
-
-          updateProductUnits(formState) {
-            const variant = formState.variant;
-            const plan = formState.plan;
-            let unitPrice = null;
-
-            if (variant && variant.unit_price) {
-              unitPrice = variant.unit_price;
-            }
-            if (plan && plan.allocation && plan.allocation.unit_price) {
-              unitPrice = plan.allocation.unit_price;
-            }
-
-            if (unitPrice) {
-              const base = this.getBaseUnit(variant);
-              const formattedPrice = window.theme.formatMoney(unitPrice, theme.moneyFormat);
-              this.container.querySelector(selectors$9.unitPrice).innerHTML = formattedPrice;
-              this.container.querySelector(selectors$9.unitBase).innerHTML = base;
-              this.container.querySelector(selectors$9.unitWrapper).classList.remove(classes$8.hidden);
-            } else {
-              this.container.querySelector(selectors$9.unitWrapper).classList.add(classes$8.hidden);
-            }
-          }
-
-          updateSku(formState) {
-            if (!this.skuWrapper) return;
-
-            this.skuWrapper.innerHTML = `${theme.strings.sku}: ${formState.variant.sku}`;
-          }
-
-          fireHookEvent(formState) {
-            const variant = formState.variant;
-            this.container.dispatchEvent(
-              new CustomEvent('theme:variant:change', {
+          onSubmitHandler(evt) {
+            evt.preventDefault();
+
+            document.dispatchEvent(
+              new CustomEvent('theme:cart:add', {
                 detail: {
-                  variant: variant,
+                  button: this.submitButton,
                 },
-                bubbles: true,
+                bubbles: false,
               })
             );
+
+            const quickAddModal = this.closest('quick-add-modal');
+            if (!quickAddModal) {
+              window.a11y.lastElement = this.submitButton;
+            }
           }
 
-          /**
-           * Tracks aspects of the product state that are relevant to UI updates
-           * @param {object} evt - variant change event
-           * @return {object} productState - represents state of variant + plans
-           *  productState.available - current variant and selling plan options result in valid offer
-           *  productState.soldOut - variant is sold out
-           *  productState.onSale - variant is on sale
-           *  productState.showUnitPrice - variant has unit price
-           *  productState.requiresPlan - all the product variants requires a selling plan
-           *  productState.hasPlan - there is a valid selling plan
-           *  productState.planSale - plan has a discount to show next to price
-           *  productState.planPerDelivery - plan price does not equal per_delivery_price - a prepaid subscription
-           */
-          setProductState(dataset) {
-            const variant = dataset.variant;
-            const plan = dataset.plan;
-
-            const productState = {
-              available: true,
-              soldOut: false,
-              onSale: false,
-              showUnitPrice: false,
-              requiresPlan: false,
-              hasPlan: false,
-              planPerDelivery: false,
-              planSale: false,
-            };
-
-            if (!variant || (variant.requires_selling_plan && !plan)) {
-              productState.available = false;
+          toggleSubmitButton(disable = true, text = window.theme.strings.addToCart) {
+            this.submitButton.toggleAttribute('disabled', disable);
+            // Preserve existing price markup inside the add-to-cart text
+            const existingPriceElement = this.submitButtonText.querySelector('[data-product-price]');
+            if (existingPriceElement) {
+              const priceHTML = existingPriceElement.outerHTML;
+              this.submitButtonText.textContent = text;
+              this.submitButtonText.insertAdjacentHTML('beforeend', ` ${priceHTML}`);
             } else {
-              if (!variant.available) {
-                productState.soldOut = true;
-              }
-
-              if (variant.compare_at_price > variant.price) {
-                productState.onSale = true;
-              }
-
-              if (variant.unit_price) {
-                productState.showUnitPrice = true;
-              }
-
-              if (this.product && this.product.requires_selling_plan) {
-                productState.requiresPlan = true;
-              }
-
-              if (plan && this.subPrices) {
-                productState.hasPlan = true;
-                if (plan.allocation.per_delivery_price !== plan.allocation.price) {
-                  productState.planPerDelivery = true;
-                }
-                if (variant.price > plan.allocation.price) {
-                  productState.planSale = true;
-                }
-              }
-            }
-            return productState;
-          }
-
-          updateProductImage(evt) {
-            const variant = evt.dataset?.variant || evt.variant;
-
-            if (variant) {
-              // Update variant image, if one is set
-              if (variant.featured_media) {
-                const selectedImage = this.container.querySelector(`[${attributes$7.imageId}="${variant.featured_media.id}"]`);
-                // If we have a mobile breakpoint or the tall layout is disabled,
-                // just switch the slideshow.
-
-                if (selectedImage) {
-                  const selectedImageId = selectedImage.getAttribute(attributes$7.mediaId);
-                  const isDesktopView = !window.theme.isMobile();
-
-                  selectedImage.dispatchEvent(
-                    new CustomEvent('theme:media:select', {
-                      bubbles: true,
-                      detail: {
-                        id: selectedImageId,
-                      },
-                    })
-                  );
-
-                  if (isDesktopView && !this.productImages.hasAttribute(attributes$7.faderDesktop) && this.variantImageScroll) {
-                    const selectedImageTop = selectedImage.getBoundingClientRect().top;
-
-                    // Scroll to variant image
-                    document.dispatchEvent(
-                      new CustomEvent('theme:tooltip:close', {
-                        bubbles: false,
-                        detail: {
-                          hideTransition: false,
-                        },
-                      })
-                    );
-
-                    window.theme.scrollTo(selectedImageTop);
-                  }
-
-                  if (!isDesktopView && !this.productImages.hasAttribute(attributes$7.faderMobile)) {
-                    this.productMediaList.scrollTo({
-                      left: selectedImage.offsetLeft,
-                    });
-                  }
-                }
-              }
+              this.submitButtonText.textContent = text;
             }
           }
 
-          updateLegend(formState) {
-            const variant = formState.variant;
-            if (variant) {
-              const optionValues = this.container.querySelectorAll(selectors$9.optionValue);
-              if (optionValues.length) {
-                optionValues.forEach((optionValue) => {
-                  const selectorWrapper = optionValue.closest(selectors$9.optionPosition);
-                  if (selectorWrapper) {
-                    const optionPosition = selectorWrapper.getAttribute(attributes$7.optionPosition);
-                    const optionIndex = parseInt(optionPosition, 10) - 1;
-                    const selectedOptionValue = variant.options[optionIndex];
-                    optionValue.innerHTML = selectedOptionValue;
-                  }
-                });
-              }
-            }
+          get variantIdInput() {
+            return this.form.querySelector('[name=id]');
           }
         }
       );
@@ -6373,37 +5561,25 @@
         });
     }
 
-    const selectors$8 = {
+    const selectors$9 = {
       gridSwatchFieldset: '[data-grid-swatch-fieldset]',
-      input: '[data-swatch-input]',
       productItem: '[data-grid-item]',
       productInfo: '[data-product-information]',
-      sectionId: '[data-section-id]',
       productImage: '[data-product-image]',
       swatchButton: '[data-swatch-button]',
-      swatchLink: '[data-swatch-link]',
-      swatchText: '[data-swatch-text]',
-      template: '[data-swatch-template]',
-      nativeScrollbar: 'native-scrollbar',
     };
 
     const classes$7 = {
       visible: 'is-visible',
-      hidden: 'hidden',
       stopEvents: 'no-events',
-      swatch: 'swatch',
     };
 
-    const attributes$6 = {
-      image: 'data-swatch-image',
+    const attributes$7 = {
       handle: 'data-swatch-handle',
       label: 'data-swatch-label',
-      scrollbar: 'data-scrollbar',
       swatchCount: 'data-swatch-count',
-      variant: 'data-swatch-variant',
       variantName: 'data-swatch-variant-name',
       variantTitle: 'data-variant-title',
-      swatchValues: 'data-swatch-values',
     };
 
     class GridSwatch extends HTMLElement {
@@ -6412,19 +5588,18 @@
 
         this.productItemMouseLeaveEvent = () => this.hideVariantImages();
         this.showVariantImageEvent = (swatchButton) => this.showVariantImage(swatchButton);
+        this.resizeEvent = () => this.init();
       }
 
       connectedCallback() {
-        this.handle = this.getAttribute(attributes$6.handle);
-        this.nativeScrollbar = this.closest(selectors$8.nativeScrollbar);
-        this.productItem = this.closest(selectors$8.productItem);
-        this.productInfo = this.closest(selectors$8.productInfo);
-        this.productImage = this.productItem.querySelector(selectors$8.productImage);
-        this.template = document.querySelector(selectors$8.template).innerHTML;
-        this.swatchesJSON = this.getSwatchesJSON();
+        this.handle = this.getAttribute(attributes$7.handle);
+        this.productItem = this.closest(selectors$9.productItem);
+        this.productInfo = this.closest(selectors$9.productInfo);
+        this.productImage = this.productItem.querySelector(selectors$9.productImage);
         this.swatchesStyle = theme.settings.collectionSwatchStyle;
+        document.addEventListener('theme:resize:width', this.resizeEvent);
 
-        const label = this.getAttribute(attributes$6.label).trim().toLowerCase();
+        const label = this.getAttribute(attributes$7.label).trim().toLowerCase();
 
         fetchProduct(this.handle).then((product) => {
           this.product = product;
@@ -6439,90 +5614,12 @@
       }
 
       init() {
-        this.innerHTML = '';
-        this.count = 0;
-        this.limitedCount = 0;
-        this.swatches = this.colorOption.values;
-        this.swatchesCount = 0;
-
-        this.swatches.forEach((swatch) => {
-          let variant = null;
-          let variantAvailable = false;
-          let image = '';
-
-          for (const productVariant of this.product.variants) {
-            const optionWithSwatch = productVariant.options.includes(swatch);
-
-            if (!variant && optionWithSwatch) {
-              variant = productVariant;
-            }
-
-            // Use a variant with image if exists
-            if (optionWithSwatch && productVariant.featured_media) {
-              image = productVariant.featured_media.preview_image.src;
-              variant = productVariant;
-              break;
-            }
-          }
-
-          for (const productVariant of this.product.variants) {
-            const optionWithSwatch = productVariant.options.includes(swatch);
-
-            if (optionWithSwatch && productVariant.available) {
-              variantAvailable = true;
-              break;
-            }
-          }
-
-          if (variant) {
-            const swatchTemplate = document.createElement('div');
-            swatchTemplate.innerHTML = this.template;
-            const swatchButton = swatchTemplate.querySelector(selectors$8.swatchButton);
-            const swatchLink = swatchTemplate.querySelector(selectors$8.swatchLink);
-            const swatchText = swatchTemplate.querySelector(selectors$8.swatchText);
-            const swatchHandle = this.swatchesJSON[swatch];
-            const swatchStyle = theme.settings.swatchesType == 'native' ? swatchHandle : `var(--${swatchHandle})`;
-            const variantTitle = variant.title.replaceAll('"', "'");
-
-            swatchButton.style = `--animation-delay: ${(100 * this.count) / 1250}s`;
-            swatchButton.classList.add(`${classes$7.swatch}-${swatchHandle}`);
-            swatchButton.dataset.tooltip = swatch;
-            swatchButton.dataset.swatchVariant = variant.id;
-            swatchButton.dataset.swatchVariantName = variantTitle;
-            swatchButton.dataset.swatchImage = image;
-            swatchButton.dataset.variant = variant.id;
-            swatchButton.style.setProperty('--swatch', swatchStyle);
-            swatchLink.href = getUrlWithVariant(this.product.url, variant.id);
-            swatchLink.dataset.swatch = swatch;
-            swatchLink.disabled = !variantAvailable;
-            swatchText.innerText = swatch;
-
-            if (this.swatchesStyle != 'limited') {
-              this.innerHTML += swatchTemplate.innerHTML;
-            } else if (this.count <= 4) {
-              this.innerHTML += swatchTemplate.innerHTML;
-              this.limitedCount++;
-            }
-            this.count++;
-          }
-          this.swatchesCount++;
-
-          if (this.swatchesCount == this.swatches.length) {
-            this.nativeScrollbar?.dispatchEvent(new Event('theme:swatches:loaded'));
-          }
-        });
-
-        this.swatchCount = this.productInfo.querySelector(`[${attributes$6.swatchCount}]`);
-        this.swatchElements = this.querySelectorAll(selectors$8.swatchLink);
-        this.swatchFieldset = this.productInfo.querySelector(selectors$8.gridSwatchFieldset);
+        this.swatchCount = this.productInfo.querySelector(`[${attributes$7.swatchCount}]`);
+        this.swatchFieldset = this.productInfo.querySelector(selectors$9.gridSwatchFieldset);
         this.hideSwatchesTimer = 0;
 
-        if (this.swatchCount.hasAttribute(attributes$6.swatchCount)) {
-          if (this.swatchesStyle == 'text' || this.swatchesStyle == 'text-slider') {
-            this.swatchCount.innerText = `${this.count} ${this.count > 1 ? theme.strings.otherColor : theme.strings.oneColor}`;
-
-            if (this.swatchesStyle == 'text') return;
-
+        if (this.swatchCount.hasAttribute(attributes$7.swatchCount)) {
+          if (this.swatchesStyle == 'text-slider') {
             this.swatchCount.addEventListener('mouseenter', () => {
               if (this.hideSwatchesTimer) clearTimeout(this.hideSwatchesTimer);
 
@@ -6539,18 +5636,8 @@
             });
           }
 
-          if (this.swatchesStyle == 'slider' || this.swatchesStyle == 'grid') {
+          if (this.swatchesStyle == 'slider' || this.swatchesStyle == 'grid' || this.swatchesStyle == 'limited') {
             this.swatchFieldset.classList.add(classes$7.visible);
-          }
-
-          if (this.swatchesStyle == 'limited') {
-            const swatchesLeft = this.count - this.limitedCount;
-
-            this.swatchFieldset.classList.add(classes$7.visible);
-
-            if (swatchesLeft > 0) {
-              this.innerHTML += `<div class="swatch-limited">+${swatchesLeft}</div>`;
-            }
           }
         }
 
@@ -6558,7 +5645,7 @@
       }
 
       bindSwatchButtonEvents() {
-        this.querySelectorAll(selectors$8.swatchButton)?.forEach((swatchButton) => {
+        this.querySelectorAll(selectors$9.swatchButton)?.forEach((swatchButton) => {
           // Show variant image when hover on color swatch
           swatchButton.addEventListener('mouseenter', this.showVariantImageEvent);
         });
@@ -6568,9 +5655,9 @@
 
       showVariantImage(event) {
         const swatchButton = event.target;
-        const variantName = swatchButton.getAttribute(attributes$6.variantName)?.replaceAll('"', "'");
-        const variantImages = this.productImage.querySelectorAll(`[${attributes$6.variantTitle}]`);
-        const variantImageSelected = this.productImage.querySelector(`[${attributes$6.variantTitle}="${variantName}"]`);
+        const variantName = swatchButton.getAttribute(attributes$7.variantName)?.replaceAll('"', "'");
+        const variantImages = this.productImage.querySelectorAll(`[${attributes$7.variantTitle}]`);
+        const variantImageSelected = this.productImage.querySelector(`[${attributes$7.variantTitle}="${variantName}"]`);
 
         // Hide all variant images
         variantImages?.forEach((image) => {
@@ -6583,36 +5670,23 @@
 
       hideVariantImages() {
         // Hide all variant images
-        this.productImage.querySelectorAll(`[${attributes$6.variantTitle}].${classes$7.visible}`)?.forEach((image) => {
+        this.productImage.querySelectorAll(`[${attributes$7.variantTitle}].${classes$7.visible}`)?.forEach((image) => {
           image.classList.remove(classes$7.visible);
         });
       }
 
-      getSwatchesJSON() {
-        if (!this.hasAttribute(attributes$6.swatchValues)) return {};
-
-        // Splitting the string by commas to get individual key-value pairs
-        const pairs = this.getAttribute(attributes$6.swatchValues).split(',');
-
-        // Creating an empty object to store the key-value pairs
-        const jsonObject = {};
-
-        // Iterating through the pairs and constructing the JSON object
-        pairs?.forEach((pair) => {
-          const [key, value] = pair.split(':');
-          jsonObject[key.trim()] = value.trim();
-        });
-
-        return jsonObject;
+      disconnectedCallback() {
+        document.removeEventListener('theme:resize:width', this.resizeEvent);
       }
     }
 
-    const selectors$7 = {
+    const selectors$8 = {
       flickityButton: '.flickity-prev-next-button',
       productLink: '[data-product-link]',
       slide: '[data-hover-slide]',
       slideTouch: '[data-hover-slide-touch]',
       slider: '[data-hover-slider]',
+      recentlyViewed: 'recently-viewed',
       video: 'video',
       vimeo: '[data-host="vimeo"]',
       youtube: '[data-host="youtube"]',
@@ -6623,8 +5697,9 @@
         super();
 
         this.flkty = null;
-        this.slider = this.querySelector(selectors$7.slider);
+        this.slider = this.querySelector(selectors$8.slider);
         this.handleScroll = this.handleScroll.bind(this);
+        this.recentlyViewed = this.closest(selectors$8.recentlyViewed);
         this.hovered = false;
 
         this.mouseEnterEvent = () => this.mouseEnterActions();
@@ -6635,10 +5710,17 @@
       }
 
       connectedCallback() {
-        if (window.theme.touch) {
-          this.initTouch();
+        this.addArrowClickHandler();
+
+        if (this.recentlyViewed) {
+          if (!this.recentlyViewed.classList.contains('hidden')) {
+            this.initBasedOnDevice();
+          } else {
+            this.onRecentlyViewedLoaded = () => this.initBasedOnDevice();
+            this.recentlyViewed.addEventListener('theme:recently-viewed:loaded', this.onRecentlyViewedLoaded);
+          }
         } else {
-          this.initFlickity();
+          this.initBasedOnDevice();
         }
       }
 
@@ -6646,14 +5728,38 @@
         if (this.flkty) {
           this.flkty.options.watchCSS = false;
           this.flkty.destroy();
+          this.flkty = null;
+        }
+
+        if (this.recentlyViewed && this.onRecentlyViewedLoaded) {
+          this.recentlyViewed.removeEventListener('theme:recently-viewed:loaded', this.onRecentlyViewedLoaded);
         }
 
         this.removeEventListener('mouseenter', this.mouseEnterEvent);
         this.removeEventListener('mouseleave', this.mouseLeaveEvent);
       }
 
+      initBasedOnDevice() {
+        if (window.theme.touch) {
+          this.initTouch();
+        } else {
+          this.initFlickity();
+        }
+      }
+
+      addArrowClickHandler() {
+        const productLink = this.closest(selectors$8.productLink);
+        if (productLink) {
+          productLink.addEventListener('click', (e) => {
+            if (e.target.matches(selectors$8.flickityButton)) {
+              e.preventDefault();
+            }
+          });
+        }
+      }
+
       initTouch() {
-        this.style.setProperty('--slides-count', this.querySelectorAll(selectors$7.slideTouch).length);
+        this.style.setProperty('--slides-count', this.querySelectorAll(selectors$8.slideTouch).length);
         this.slider.addEventListener('scroll', this.handleScroll);
       }
 
@@ -6663,10 +5769,10 @@
       }
 
       initFlickity() {
-        if (this.querySelectorAll(selectors$7.slide).length < 2) return;
+        if (this.flkty || !this.slider || this.slider.classList.contains('flickity-enabled') || this.querySelectorAll(selectors$8.slide).length < 2) return;
 
         this.flkty = new window.theme.Flickity(this.slider, {
-          cellSelector: selectors$7.slide,
+          cellSelector: selectors$8.slide,
           contain: true,
           wrapAround: true,
           watchCSS: true,
@@ -6685,13 +5791,6 @@
         this.addEventListener('mouseleave', () => {
           this.flkty.pausePlayer();
         });
-
-        // Prevent page redirect on Flickity arrow click
-        this.closest(selectors$7.productLink).addEventListener('click', (e) => {
-          if (e.target.matches(selectors$7.flickityButton)) {
-            e.preventDefault();
-          }
-        });
       }
 
       mouseEnterActions() {
@@ -6707,10 +5806,10 @@
       }
 
       videoActions() {
-        const youtube = this.querySelector(selectors$7.youtube);
-        const vimeo = this.querySelector(selectors$7.vimeo);
+        const youtube = this.querySelector(selectors$8.youtube);
+        const vimeo = this.querySelector(selectors$8.vimeo);
         const mediaExternal = youtube || vimeo;
-        const mediaNative = this.querySelector(selectors$7.video);
+        const mediaNative = this.querySelector(selectors$8.video);
 
         if (mediaExternal) {
           let action = this.hovered ? 'playVideo' : 'pauseVideo';
@@ -6749,11 +5848,7 @@
       siblingLinkCurrent: 'sibling__link--current',
     };
 
-    const settings = {
-      errorDelay: 3000,
-    };
-
-    const selectors$6 = {
+    const selectors$7 = {
       animation: '[data-animation]',
       apiContent: '[data-api-content]',
       buttonQuickAdd: '[data-quick-add-btn]',
@@ -6765,7 +5860,6 @@
       focusable: 'button, [href], select, textarea, [tabindex]:not([tabindex="-1"])',
       messageError: '[data-message-error]',
       modalButton: '[data-quick-add-modal-handle]',
-      modalContainer: '[data-product-upsell-container]',
       modalContent: '[data-product-upsell-ajax]',
       modalClose: '[data-quick-add-modal-close]',
       productGridItem: 'data-grid-item',
@@ -6776,7 +5870,7 @@
       tooltip: '[data-tooltip]',
     };
 
-    const attributes$5 = {
+    const attributes$6 = {
       closing: 'closing',
       productId: 'data-product-id',
       modalHandle: 'data-quick-add-modal-handle',
@@ -6788,16 +5882,16 @@
       constructor() {
         super();
 
-        this.quickAddHolder = this.querySelector(selectors$6.quickAddHolder);
+        this.quickAddHolder = this.querySelector(selectors$7.quickAddHolder);
 
         if (this.quickAddHolder) {
           this.modal = null;
           this.currentModal = null;
-          this.productId = this.quickAddHolder.getAttribute(attributes$5.quickAddHolder);
-          this.modalButton = this.quickAddHolder.querySelector(selectors$6.modalButton);
-          this.handle = this.modalButton?.getAttribute(attributes$5.modalHandle);
-          this.buttonQuickAdd = this.quickAddHolder.querySelector(selectors$6.buttonQuickAdd);
-          this.buttonATC = this.quickAddHolder.querySelector(selectors$6.buttonAddToCart);
+          this.productId = this.quickAddHolder.getAttribute(attributes$6.quickAddHolder);
+          this.modalButton = this.quickAddHolder.querySelector(selectors$7.modalButton);
+          this.handle = this.modalButton?.getAttribute(attributes$6.modalHandle);
+          this.buttonQuickAdd = this.quickAddHolder.querySelector(selectors$7.buttonQuickAdd);
+          this.buttonATC = this.quickAddHolder.querySelector(selectors$7.buttonAddToCart);
           this.button = this.modalButton || this.buttonATC;
           this.modalClose = this.modalClose.bind(this);
           this.modalCloseOnProductAdded = this.modalCloseOnProductAdded.bind(this);
@@ -6845,7 +5939,7 @@
       modalButtonClickEvent(e) {
         e.preventDefault();
 
-        const isSiblingSwapper = this.modalButton.hasAttribute(attributes$5.siblingSwapper);
+        const isSiblingSwapper = this.modalButton.hasAttribute(attributes$6.siblingSwapper);
         const isSiblingLinkCurrent = this.modalButton.classList.contains(classes$6.siblingLinkCurrent);
 
         if (isSiblingLinkCurrent) return;
@@ -6855,7 +5949,7 @@
 
         // Siblings product modal swapper
         if (isSiblingSwapper && !isSiblingLinkCurrent) {
-          this.currentModal = e.target.closest(selectors$6.quickAddModal);
+          this.currentModal = e.target.closest(selectors$7.quickAddModal);
           this.currentModal.classList.add(classes$6.loading);
         }
 
@@ -6863,27 +5957,19 @@
       }
 
       modalCreate(response) {
-        const cachedModal = document.querySelector(`${selectors$6.quickAddModal}[${attributes$5.productId}="${this.productId}"]`);
+        const modalTemplate = this.quickAddHolder.querySelector(selectors$7.quickAddModalTemplate);
+        if (!modalTemplate) return;
 
-        if (cachedModal) {
-          this.modal = cachedModal;
-          this.modalOpen();
-        } else {
-          const modalTemplate = this.quickAddHolder.querySelector(selectors$6.quickAddModalTemplate);
-          if (!modalTemplate) return;
+        const htmlObject = document.createElement('div');
+        htmlObject.innerHTML = modalTemplate.innerHTML;
 
-          const htmlObject = document.createElement('div');
-          htmlObject.innerHTML = modalTemplate.innerHTML;
+        // Add dialog to the body
+        document.body.appendChild(htmlObject.querySelector(selectors$7.quickAddModal));
 
-          // Add dialog to the body
-          document.body.appendChild(htmlObject.querySelector(selectors$6.quickAddModal));
-          modalTemplate.remove();
+        this.modal = document.querySelector(`${selectors$7.quickAddModal}[${attributes$6.productId}="${this.productId}"]`);
+        this.modal.querySelector(selectors$7.modalContent).innerHTML = new DOMParser().parseFromString(response, 'text/html').querySelector(selectors$7.apiContent).innerHTML;
 
-          this.modal = document.querySelector(`${selectors$6.quickAddModal}[${attributes$5.productId}="${this.productId}"]`);
-          this.modal.querySelector(selectors$6.modalContent).innerHTML = new DOMParser().parseFromString(response, 'text/html').querySelector(selectors$6.apiContent).innerHTML;
-
-          this.modalCreatedCallback();
-        }
+        this.modalCreatedCallback();
       }
 
       modalOpen() {
@@ -6909,7 +5995,7 @@
 
         // Animate items
         requestAnimationFrame(() => {
-          this.modal.querySelectorAll(selectors$6.animation).forEach((item) => {
+          this.modal.querySelectorAll(selectors$7.animation).forEach((item) => {
             item.classList.add(classes$6.animated);
           });
         });
@@ -6924,8 +6010,8 @@
           return;
         }
 
-        if (!this.modal.hasAttribute(attributes$5.closing)) {
-          this.modal.setAttribute(attributes$5.closing, '');
+        if (!this.modal.hasAttribute(attributes$6.closing)) {
+          this.modal.setAttribute(attributes$6.closing, '');
           this.isAnimating = true;
           return;
         }
@@ -6937,7 +6023,7 @@
           this.modal.removeAttribute('open');
         }
 
-        this.modal.removeAttribute(attributes$5.closing);
+        this.modal.removeAttribute(attributes$6.closing);
         this.modal.setAttribute('inert', '');
         this.modal.classList.remove(classes$6.loading);
 
@@ -6951,6 +6037,17 @@
 
         this.resetAnimatedItems();
 
+        // Dispatch event to close all tooltips when modal closes
+        document.dispatchEvent(
+          new CustomEvent('theme:tooltip:close', {
+            bubbles: true,
+            detail: {
+              hideTransition: true,
+              immediate: true,
+            },
+          })
+        );
+
         // Unlock scroll if no other drawers & modals are open
         if (!window.theme.hasOpenModals()) {
           document.dispatchEvent(new CustomEvent('theme:scroll:unlock', {bubbles: true}));
@@ -6960,11 +6057,23 @@
 
         this.a11y.removeTrapFocus();
         this.a11y.autoFocusLastElement();
+        this.modalRemove();
+      }
+
+      modalRemove() {
+        window.theme
+          .waitForAllAnimationsEnd(this.modal)
+          .then(() => {
+            this.modal?.remove();
+          })
+          .catch(() => {
+            this.modal?.remove();
+          });
       }
 
       modalEvents() {
         // Close button click event
-        this.modal.querySelector(selectors$6.modalClose)?.addEventListener('click', (e) => {
+        this.modal.querySelector(selectors$7.modalClose)?.addEventListener('click', (e) => {
           e.preventDefault();
           this.modalClose();
         });
@@ -6993,12 +6102,12 @@
           if (event.target !== this.modal) return;
           this.isAnimating = false;
 
-          if (this.modal.hasAttribute(attributes$5.closing)) {
+          if (this.modal.hasAttribute(attributes$6.closing)) {
             this.modalClose();
           } else {
             setTimeout(() => {
               this.a11y.trapFocus(this.modal);
-              const focusTarget = this.modal.querySelector('[autofocus]') || this.modal.querySelector(selectors$6.focusable);
+              const focusTarget = this.modal.querySelector('[autofocus]') || this.modal.querySelector(selectors$7.focusable);
               focusTarget?.focus();
             }, 50);
           }
@@ -7024,17 +6133,29 @@
       errorHandler() {
         this.quickAddHolder.addEventListener('theme:cart:error', (event) => {
           const holder = event.detail.holder;
-          const parentProduct = holder.closest(`[${selectors$6.productGridItem}]`);
+          const parentProduct = holder.closest(`[${selectors$7.productGridItem}]`);
           if (!parentProduct) return;
 
-          const errorMessageHolder = holder.querySelector(selectors$6.messageError);
+          const errorMessageHolder = holder.querySelector(selectors$7.messageError);
           const hasOverlayText = parentProduct.classList.contains(classes$6.overlayText);
-          const productInfo = parentProduct.querySelector(selectors$6.productInformationHolder);
-          const button = holder.querySelector(selectors$6.buttonAddToCart);
+          const productInfo = parentProduct.querySelector(selectors$7.productInformationHolder);
+          const button = holder.querySelector(selectors$7.buttonAddToCart);
 
           if (button) {
             button.classList.remove(classes$6.added, classes$6.loading);
             holder.classList.add(classes$6.error);
+
+            const removeErrorClass = () => {
+              this.resetQuickAddButtons();
+
+              if (hasOverlayText) {
+                productInfo.classList.remove(classes$6.hidden);
+              }
+
+              holder.removeEventListener('animationend', removeErrorClass);
+            };
+
+            holder.addEventListener('animationend', removeErrorClass);
           }
 
           if (errorMessageHolder) {
@@ -7044,14 +6165,6 @@
           if (hasOverlayText) {
             productInfo.classList.add(classes$6.hidden);
           }
-
-          setTimeout(() => {
-            this.resetQuickAddButtons();
-
-            if (hasOverlayText) {
-              productInfo.classList.remove(classes$6.hidden);
-            }
-          }, settings.errorDelay);
         });
       }
 
@@ -7070,19 +6183,15 @@
       }
 
       renderModal() {
-        if (this.modal) {
-          this.modalOpen();
-        } else {
-          window
-            .fetch(`${window.theme.routes.root}products/${this.handle}?section_id=api-product-upsell`)
-            .then(this.upsellErrorsHandler)
-            .then((response) => {
-              return response.text();
-            })
-            .then((response) => {
-              this.modalCreate(response);
-            });
-        }
+        window
+          .fetch(`${window.theme.routes.root}products/${this.handle}?section_id=api-product-upsell`)
+          .then(this.upsellErrorsHandler)
+          .then((response) => {
+            return response.text();
+          })
+          .then((response) => {
+            this.modalCreate(response);
+          });
       }
 
       modalCreatedCallback() {
@@ -7107,7 +6216,7 @@
       }
 
       resetAnimatedItems() {
-        this.modal?.querySelectorAll(selectors$6.animation).forEach((item) => {
+        this.modal?.querySelectorAll(selectors$7.animation).forEach((item) => {
           item.classList.remove(classes$6.animated);
         });
       }
@@ -7125,13 +6234,13 @@
       customElements.define('hover-images', HoverImages);
     }
 
-    const selectors$5 = {
+    const selectors$6 = {
       buttonArrow: '[data-button-arrow]',
       deferredMediaButton: '[data-deferred-media-button]',
       focusedElement: 'model-viewer, video, iframe, button, [href], input, [tabindex]',
       productMedia: '[data-image-id]',
       productMediaList: '[data-product-media-list]',
-      section: '[data-section-type]',
+      section: '[data-section-id]',
     };
 
     const classes$5 = {
@@ -7142,9 +6251,10 @@
       mediaActive: 'media--active',
       mediaHidden: 'media--hidden',
       mediaHiding: 'media--hiding',
+      productQuickAddImages: 'product-quick-add__images',
     };
 
-    const attributes$4 = {
+    const attributes$5 = {
       activeMedia: 'data-active-media',
       buttonPrev: 'data-button-prev',
       buttonNext: 'data-button-next',
@@ -7169,21 +6279,21 @@
             this.startY = 0;
             this.scrollLeft = 0;
             this.onButtonArrowClick = (e) => this.buttonArrowClickEvent(e);
-            this.container = this.closest(selectors$5.section);
+            this.container = this.closest(selectors$6.section);
             this.handleMouseDown = this.handleMouseDown.bind(this);
             this.handleMouseLeave = this.handleMouseLeave.bind(this);
             this.handleMouseUp = this.handleMouseUp.bind(this);
             this.handleMouseMove = this.handleMouseMove.bind(this);
             this.handleKeyUp = this.handleKeyUp.bind(this);
-            this.productMediaItems = this.querySelectorAll(selectors$5.productMedia);
-            this.productMediaList = this.querySelector(selectors$5.productMediaList);
+            this.productMediaItems = this.querySelectorAll(selectors$6.productMedia);
+            this.productMediaList = this.querySelector(selectors$6.productMediaList);
             this.setHeight = this.setHeight.bind(this);
             this.toggleEvents = this.toggleEvents.bind(this);
             this.selectMediaEvent = (e) => this.showMediaOnVariantSelect(e);
           }
 
           connectedCallback() {
-            if (Object.keys(this.productMediaItems).length === 1) return;
+            if (Object.keys(this.productMediaItems).length < 2) return;
 
             this.productMediaObserver();
             this.toggleEvents();
@@ -7208,9 +6318,9 @@
           }
 
           toggleEvents() {
-            const isMobileView = window.theme.isMobile();
+            const isMobileView = theme.isMobile;
 
-            if ((isMobileView && this.hasAttribute(attributes$4.faderMobile)) || (!isMobileView && this.hasAttribute(attributes$4.faderDesktop))) {
+            if ((isMobileView && this.hasAttribute(attributes$5.faderMobile)) || (!isMobileView && this.hasAttribute(attributes$5.faderDesktop))) {
               this.bindEventListeners();
             } else {
               this.unbindEventListeners();
@@ -7267,7 +6377,7 @@
             const distanceX = x - this.startX;
             const distanceY = y - this.startY;
             const direction = distanceX > 0 ? 1 : -1;
-            const isImage = this.getCurrentMedia().hasAttribute(attributes$4.type) && this.getCurrentMedia().getAttribute(attributes$4.type) === 'image';
+            const isImage = this.getCurrentMedia().hasAttribute(attributes$5.type) && this.getCurrentMedia().getAttribute(attributes$5.type) === 'image';
 
             if (Math.abs(distanceX) > 10 && Math.abs(distanceX) > Math.abs(distanceY) && isImage) {
               direction < 0 ? this.showNextImage() : this.showPreviousImage();
@@ -7297,15 +6407,15 @@
           }
 
           handleArrowsClickEvent() {
-            this.querySelectorAll(selectors$5.buttonArrow)?.forEach((button) => {
+            this.querySelectorAll(selectors$6.buttonArrow)?.forEach((button) => {
               button.addEventListener('click', (e) => {
                 e.preventDefault();
 
-                if (e.target.hasAttribute(attributes$4.buttonPrev)) {
+                if (e.target.hasAttribute(attributes$5.buttonPrev)) {
                   this.showPreviousImage();
                 }
 
-                if (e.target.hasAttribute(attributes$4.buttonNext)) {
+                if (e.target.hasAttribute(attributes$5.buttonNext)) {
                   this.showNextImage();
                 }
               });
@@ -7328,9 +6438,9 @@
 
               // Append buttons outside the slider element
               this.productMediaList.append(buttonsWrap);
-              this.buttons = this.querySelectorAll(selectors$5.buttonArrow);
-              this.buttonPrev = this.querySelector(`[${attributes$4.buttonPrev}]`);
-              this.buttonNext = this.querySelector(`[${attributes$4.buttonNext}]`);
+              this.buttons = this.querySelectorAll(selectors$6.buttonArrow);
+              this.buttonPrev = this.querySelector(`[${attributes$5.buttonPrev}]`);
+              this.buttonNext = this.querySelector(`[${attributes$5.buttonNext}]`);
             }
 
             this.handleArrowsClickEvent();
@@ -7354,7 +6464,7 @@
           }
 
           preloadImage(id) {
-            this.querySelector(`[${attributes$4.mediaId}="${id}"] img`)?.setAttribute('loading', 'eager');
+            this.querySelector(`[${attributes$5.mediaId}="${id}"] img`)?.setAttribute('loading', 'eager');
           }
 
           showMediaOnVariantSelect(e) {
@@ -7363,14 +6473,13 @@
           }
 
           getCurrentMedia() {
-            return this.querySelector(`${selectors$5.productMedia}.${classes$5.mediaActive}`);
+            return this.querySelector(`${selectors$6.productMedia}.${classes$5.mediaActive}`);
           }
 
           getNextMediaId() {
             const currentMedia = this.getCurrentMedia();
-            const nextMedia = currentMedia?.nextElementSibling.hasAttribute(attributes$4.imageId) ? currentMedia?.nextElementSibling : this.querySelector(selectors$5.productMedia);
-
-            return nextMedia?.getAttribute(attributes$4.mediaId);
+            const nextMedia = currentMedia?.nextElementSibling.hasAttribute(attributes$5.imageId) ? currentMedia?.nextElementSibling : this.querySelector(selectors$6.productMedia);
+            return nextMedia?.getAttribute(attributes$5.mediaId);
           }
 
           getPreviousMediaId() {
@@ -7378,7 +6487,7 @@
             const lastIndex = this.productMediaItems.length - 1;
             const previousMedia = currentMedia?.previousElementSibling || this.productMediaItems[lastIndex];
 
-            return previousMedia?.getAttribute(attributes$4.mediaId);
+            return previousMedia?.getAttribute(attributes$5.mediaId);
           }
 
           showNextImage() {
@@ -7404,11 +6513,11 @@
           setActiveMedia(id) {
             if (!id) return;
 
-            this.setAttribute(attributes$4.activeMedia, id);
+            this.setAttribute(attributes$5.activeMedia, id);
 
-            const activeImage = this.querySelector(`${selectors$5.productMedia}.${classes$5.mediaActive}`);
-            const selectedImage = this.querySelector(`[${attributes$4.mediaId}="${id}"]`);
-            const selectedImageFocus = selectedImage?.querySelector(selectors$5.focusedElement);
+            const activeImage = this.querySelector(`${selectors$6.productMedia}.${classes$5.mediaActive}`);
+            const selectedImage = this.querySelector(`[${attributes$5.mediaId}="${id}"]`);
+            const selectedImageFocus = selectedImage?.querySelector(selectors$6.focusedElement);
             const deferredMedia = selectedImage.querySelector('deferred-media');
 
             activeImage?.classList.add(classes$5.mediaHiding);
@@ -7419,7 +6528,7 @@
 
             // Force media loading if slide becomes visible
             if (deferredMedia && deferredMedia.getAttribute('loaded') !== true) {
-              selectedImage.querySelector(selectors$5.deferredMediaButton)?.dispatchEvent(new Event('click', {bubbles: false}));
+              selectedImage.querySelector(selectors$6.deferredMediaButton)?.dispatchEvent(new Event('click', {bubbles: false}));
             }
 
             requestAnimationFrame(() => {
@@ -7434,7 +6543,9 @@
 
           // Set current product image height variable to product images container
           setHeight() {
-            const mediaHeight = this.querySelector(`${selectors$5.productMedia}.${classes$5.mediaActive}`)?.offsetHeight || this.productMediaItems[0]?.offsetHeight;
+            if (this.classList.contains(classes$5.productQuickAddImages)) return;
+
+            const mediaHeight = this.querySelector(`${selectors$6.productMedia}.${classes$5.mediaActive}`)?.offsetHeight || this.productMediaItems[0]?.offsetHeight;
             this.style.setProperty('--height', `${mediaHeight}px`);
           }
 
@@ -7453,6 +6564,165 @@
                 }
               });
             });
+          }
+        }
+      );
+    }
+
+    const selectors$5 = {
+      swapHandle: '[data-swap-handle]',
+      nativeScrollbar: 'native-scrollbar',
+      activeSibling: '.sibling__link--current',
+    };
+
+    const attributes$4 = {
+      swapHandle: 'data-swap-handle',
+      swapUrl: 'data-swap-url',
+    };
+
+    if (!customElements.get('product-item')) {
+      customElements.define(
+        'product-item',
+        class ProductItem extends HTMLElement {
+          abortController = undefined;
+          pendingSwapHandle = null;
+          postProcessHtmlCallbacks = [];
+
+          handleClick = (event) => this.handleChange(event);
+          handleKeyup = (event) => {
+            if (event.code === theme.keyboardKeys.ENTER || event.code === theme.keyboardKeys.NUMPADENTER) {
+              this.handleChange(event);
+            }
+          };
+          onHtmlChange = (event) => this.handleHtmlChange(event);
+
+          constructor() {
+            super();
+            this.swapHandles = this.querySelectorAll(selectors$5.swapHandle);
+            this.activeSibling = [...this.swapHandles].find((el) => el.querySelector(selectors$5.activeSibling));
+          }
+
+          connectedCallback() {
+            this.scrollIntoView();
+
+            this.swapHandles?.forEach((element) => {
+              element.addEventListener('click', this.handleClick);
+              element.addEventListener('keyup', this.handleKeyup);
+            });
+
+            this.initProductSwapUtility();
+          }
+
+          disconnectedCallback() {
+            // Abort any pending fetch requests
+            this.abortController?.abort();
+
+            // Remove event listeners
+            this.swapHandles?.forEach((element) => {
+              element.removeEventListener('click', this.handleClick);
+              element.removeEventListener('keyup', this.handleKeyup);
+            });
+          }
+
+          initProductSwapUtility() {
+            this.postProcessHtmlCallbacks.push(() => {
+              document.addEventListener('theme:html:change', this.onHtmlChange);
+            });
+          }
+
+          handleChange(event) {
+            if (!this.contains(event.target)) return;
+
+            const element = event.target.closest(selectors$5.swapHandle);
+            const targetUrl = element.dataset.swapUrl;
+            const productUrl = `${window.Shopify.routes.root}products/${element.dataset.swapHandle}`;
+            // Store the clicked element's handle to refocus it after swap
+            this.pendingSwapHandle = element.dataset.swapHandle;
+
+            const shouldSwapProduct = this.dataset.url !== targetUrl;
+            if (!shouldSwapProduct) return;
+
+            this.renderProductItem({
+              // Fetch the new product's HTML with section rendering API
+              requestUrl: `${productUrl}?section_id=api-product-grid-item`,
+              // Returns a function that will process and swap the HTML after fetch completes
+              callback: this.handleSwapProduct(),
+            });
+          }
+
+          handleSwapProduct() {
+            return (html) => {
+              // Set up animation parameters with the new product-item element's ID
+              const aosDelay = 0;
+              const productItem = html.querySelector('product-item');
+              const aosAnchor = productItem.id ? `#${productItem.id}` : '';
+
+              // Get the raw HTML and replace animation placeholder strings
+              let productHTML = productItem.outerHTML;
+              productHTML = productHTML.includes('||itemAnimationDelay||') ? productHTML.replaceAll('||itemAnimationDelay||', aosDelay) : productHTML;
+              productHTML = productHTML.includes('||itemAnimationAnchor||') ? productHTML.replaceAll('||itemAnimationAnchor||', aosAnchor) : productHTML;
+
+              // Parse the processed HTML back into a DOM element
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = productHTML;
+              const processedProductItem = tempDiv.querySelector('product-item');
+
+              window.theme.htmlUpdate.viewTransition(
+                this, // Current product-item element to be replaced
+                processedProductItem, // New product-item element with updated content
+                this.postProcessHtmlCallbacks // Run any post-processing after swap (focus, init components)
+              );
+            };
+          }
+
+          renderProductItem({requestUrl, callback}) {
+            this.abortController?.abort();
+            this.abortController = new AbortController();
+
+            fetch(requestUrl, {signal: this.abortController.signal})
+              .then((response) => response.text())
+              .then((responseText) => {
+                const html = new DOMParser().parseFromString(responseText, 'text/html');
+                callback(html);
+              })
+              .catch((error) => {
+                if (error.name === 'AbortError') {
+                  console.log('Fetch aborted by user');
+                } else {
+                  console.error(error);
+                }
+
+                document.removeEventListener('theme:html:change', this.onHtmlChange);
+              });
+          }
+
+          handleHtmlChange(event) {
+            if (!event?.detail?.element) return;
+            if (!this.pendingSwapHandle) return;
+
+            const product = event.detail.element;
+            const swatch = product.querySelector(`[${attributes$4.swapHandle}="${this.pendingSwapHandle}"]`);
+
+            // Set focus and scroll into view of the last clicked sibling swatch element
+            swatch.focus();
+            this.scrollIntoView({product, swatch});
+
+            this.pendingSwapHandle = null;
+            document.removeEventListener('theme:html:change', this.onHtmlChange);
+          }
+
+          scrollIntoView(elements = false) {
+            if (!this.activeSibling) return;
+
+            const swatch = elements ? elements.swatch : this.activeSibling;
+            const product = elements ? elements.product : this;
+
+            const nativeScrollbar = product.querySelector(selectors$5.nativeScrollbar);
+            if (!nativeScrollbar || typeof nativeScrollbar.move !== 'function') return;
+
+            const computedStyle = getComputedStyle(swatch);
+            const swatchOffset = swatch.offsetLeft + parseFloat(computedStyle.marginLeft) + parseFloat(computedStyle.marginRight);
+            requestAnimationFrame(() => nativeScrollbar.move(swatchOffset - swatch.clientWidth, 'instant'));
           }
         }
       );
@@ -7498,9 +6768,11 @@
       productImage: '[data-product-image-default]',
       productImageSibling: '[data-product-image-sibling]',
       productPrice: '[data-product-price]',
+      siblingsInnerHolder: '[data-sibling-inner]',
       siblingCount: '[data-sibling-count]',
       siblingFieldset: '[data-sibling-fieldset]',
       siblingLink: '[data-sibling-link]',
+      siblingLinkCurrent: '.sibling__link--current',
     };
 
     const classes$4 = {
@@ -7508,15 +6780,19 @@
       fade: 'is-fade',
       stopEvents: 'no-events',
       active: 'is-active',
+      isFocused: 'is-focused',
     };
 
     const attributes$3 = {
       siblingAddedImage: 'data-sibling-added-image',
       siblingCutline: 'data-sibling-cutline',
       siblingImage: 'data-sibling-image',
-      siblingLink: 'data-sibling-link',
       siblingPrice: 'data-sibling-price',
+      siblingCompareAtPrice: 'data-sibling-compare-at-price',
       productLink: 'data-product-link',
+      siblingLink: 'data-sibling-link',
+      mobileColumnsSmall: 'data-mobile-columns-small',
+      anySiblingCutline: 'data-any-sibling-cutline',
     };
 
     class SiblingSwatches {
@@ -7528,6 +6804,7 @@
         this.productPrice = this.product.querySelector(selectors$4.productPrice);
         this.productImage = this.product.querySelector(selectors$4.productImage);
         this.productImageSibling = this.product.querySelector(selectors$4.productImageSibling);
+        this.siblingsInnerHolder = this.product.querySelector(selectors$4.siblingsInnerHolder);
 
         this.init();
       }
@@ -7535,10 +6812,16 @@
       init() {
         this.cacheDefaultValues();
 
-        this.product.addEventListener('mouseleave', () => this.resetProductValues());
+        this.siblingsInnerHolder.addEventListener('mouseleave', () => this.resetProductValues());
+        this.siblingsInnerHolder.addEventListener('focusout', () => {
+          if (document.body.classList.contains(classes$4.isFocused)) this.resetProductValues();
+        });
 
         this.swatches.forEach((swatch) => {
           swatch.addEventListener('mouseenter', (event) => this.showSibling(event));
+          swatch.addEventListener('focusin', (event) => {
+            if (document.body.classList.contains(classes$4.isFocused)) this.showSibling(event);
+          });
         });
 
         if (this.productLinks.length) {
@@ -7551,11 +6834,17 @@
       }
 
       cacheDefaultValues() {
+        this.activeSibling = this.siblingsInnerHolder.querySelector(selectors$4.siblingLinkCurrent)?.closest(selectors$4.siblingLink);
+        if (this.activeSibling) {
+          this.productImageSibling.setAttribute(attributes$3.siblingImage, this.activeSibling.dataset.siblingImage);
+        }
+
         this.productLinkValue = this.productLinks[0].hasAttribute(attributes$3.productLink) ? this.productLinks[0].getAttribute(attributes$3.productLink) : '';
         this.productPriceValue = this.productPrice.innerHTML;
 
         if (this.productCutline) {
           this.productCutlineValue = this.productCutline.innerHTML;
+          this.anySiblingCutline = this.productCutline.getAttribute(attributes$3.anySiblingCutline) === 'true';
         }
       }
 
@@ -7584,6 +6873,7 @@
         const swatch = event.target;
         const siblingLink = swatch.hasAttribute(attributes$3.siblingLink) ? swatch.getAttribute(attributes$3.siblingLink) : '';
         const siblingPrice = swatch.hasAttribute(attributes$3.siblingPrice) ? swatch.getAttribute(attributes$3.siblingPrice) : '';
+        const siblingCompareAtPrice = swatch.hasAttribute(attributes$3.siblingCompareAtPrice) ? swatch.getAttribute(attributes$3.siblingCompareAtPrice) : '';
         const siblingCutline = swatch.hasAttribute(attributes$3.siblingCutline) ? swatch.getAttribute(attributes$3.siblingCutline) : '';
         const siblingImage = swatch.hasAttribute(attributes$3.siblingImage) ? swatch.getAttribute(attributes$3.siblingImage) : '';
 
@@ -7593,7 +6883,9 @@
           });
         }
 
-        if (siblingPrice) {
+        if (siblingCompareAtPrice) {
+          this.productPrice.innerHTML = `<span class="price sale"><span class="new-price">${siblingPrice}</span> <span class="old-price">${siblingCompareAtPrice}</span></span>`;
+        } else {
           this.productPrice.innerHTML = `<span class="price">${siblingPrice}</span>`;
         }
 
@@ -7602,7 +6894,9 @@
             this.productCutline.innerHTML = siblingCutline;
             this.productCutline.title = siblingCutline;
           } else {
-            this.productCutline.innerHTML = '';
+            // Use &nbsp; to reserve space when any sibling has a cutline, preventing CLS
+            const anySiblingCutline = this.productCutline.getAttribute(attributes$3.anySiblingCutline) === 'true';
+            this.productCutline.innerHTML = anySiblingCutline ? '&nbsp;' : '';
             this.productCutline.title = '';
           }
         }
@@ -7626,6 +6920,15 @@
           this.productImageSibling.querySelector(`[src="${imageSrc}"]`).classList.add(classes$4.fade);
         };
         const swapImages = () => {
+          const activeSiblingImage = this.productImageSibling.getAttribute(attributes$3.siblingImage);
+          const swapNewImageOnHover = siblingImage !== activeSiblingImage;
+          const swapActiveSiblingImage = siblingImage === activeSiblingImage && this.productImageSibling.classList.contains(classes$4.visible);
+
+          // Avoid changing the image when hovering over the currently active sibling link, if the featured image remains unchanged.
+          const shouldSwap = Boolean(swapActiveSiblingImage || swapNewImageOnHover);
+
+          if (!shouldSwap) return;
+
           this.productImageSibling.querySelectorAll('img').forEach((image) => {
             image.classList.remove(classes$4.fade);
           });
@@ -7661,64 +6964,132 @@
       }
     }
 
-    class ProductSiblings extends HTMLElement {
-      constructor() {
-        super();
-      }
+    if (!customElements.get('product-item-siblings')) {
+      customElements.define(
+        'product-item-siblings',
+        class ProductSiblings extends HTMLElement {
+          constructor() {
+            super();
 
-      connectedCallback() {
-        this.product = this.closest(selectors$4.productGridItem);
-        this.siblingCount = this.querySelector(selectors$4.siblingCount);
-        this.siblingFieldset = this.querySelector(selectors$4.siblingFieldset);
-        this.siblingLinks = this.querySelectorAll(selectors$4.siblingLink);
-        this.productInfo = this.closest(selectors$4.productInfo);
-        this.productLink = this.closest(selectors$4.link);
-        this.hideSwatchesTimer = 0;
-        this.swatchesStyle = theme.settings.collectionSwatchStyle;
+            this.resizeEvent = () => this.handleResize();
+          }
 
-        if (this.siblingFieldset && this.productInfo) {
-          if (this.swatchesStyle == 'grid' || this.swatchesStyle == 'slider' || this.swatchesStyle == 'limited') {
+          connectedCallback() {
+            this.product = this.closest(selectors$4.productGridItem);
+            this.siblingCount = this.querySelector(selectors$4.siblingCount);
+            this.siblingFieldset = this.querySelector(selectors$4.siblingFieldset);
+            this.siblingLinks = this.querySelectorAll(selectors$4.siblingLink);
+            this.productInfo = this.closest(selectors$4.productInfo);
+            this.productLink = this.closest(selectors$4.link);
+            this.hideSwatchesTimer = 0;
+            this.swatchesStyle = theme.settings.collectionSwatchStyle;
+
+            if (this.siblingFieldset && this.productInfo) {
+              if (this.swatchesStyle == 'grid' || this.swatchesStyle == 'slider' || this.swatchesStyle == 'limited') {
+                this.siblingFieldset.classList.add(classes$4.visible);
+              }
+
+              if (this.siblingCount) {
+                this.siblingCount.addEventListener('mouseenter', () => this.showSiblings());
+
+                // Prevent color swatches blinking on mouse move
+                this.productInfo.addEventListener('mouseleave', () => this.hideSiblings());
+              }
+            }
+
+            if (this.siblingLinks.length) {
+              new SiblingSwatches(this.siblingLinks, this.product);
+            }
+
+            document.addEventListener('theme:resize:width', this.resizeEvent);
+          }
+
+          disconnectedCallback() {
+            document.removeEventListener('theme:resize:width', this.resizeEvent);
+          }
+
+          handleResize() {
+            if (this.siblingFieldset && this.productInfo) {
+              if (this.swatchesStyle == 'grid' || this.swatchesStyle == 'slider' || this.swatchesStyle == 'limited') {
+                this.siblingFieldset.classList.add(classes$4.visible);
+                this.limitVisibleSwatches();
+              }
+            }
+          }
+
+          showSiblings() {
+            if (this.hideSwatchesTimer) clearTimeout(this.hideSwatchesTimer);
+
+            if (this.productLink) {
+              this.productLink.classList.add(classes$4.stopEvents);
+            }
+
+            if (this.swatchesStyle == 'text') return;
+
             this.siblingFieldset.classList.add(classes$4.visible);
           }
 
-          if (this.siblingCount) {
-            this.siblingCount.addEventListener('mouseenter', () => this.showSiblings());
+          hideSiblings() {
+            this.hideSwatchesTimer = setTimeout(() => {
+              if (this.productLink) {
+                this.productLink.classList.remove(classes$4.stopEvents);
+              }
 
-            // Prevent color swatches blinking on mouse move
-            this.productInfo.addEventListener('mouseleave', () => this.hideSiblings());
-          }
-        }
-
-        if (this.siblingLinks.length) {
-          new SiblingSwatches(this.siblingLinks, this.product);
-        }
-      }
-
-      showSiblings() {
-        if (this.hideSwatchesTimer) clearTimeout(this.hideSwatchesTimer);
-
-        if (this.productLink) {
-          this.productLink.classList.add(classes$4.stopEvents);
-        }
-
-        if (this.swatchesStyle == 'text') return;
-
-        this.siblingFieldset.classList.add(classes$4.visible);
-      }
-
-      hideSiblings() {
-        this.hideSwatchesTimer = setTimeout(() => {
-          if (this.productLink) {
-            this.productLink.classList.remove(classes$4.stopEvents);
+              this.siblingFieldset.classList.remove(classes$4.visible);
+            }, 100);
           }
 
-          this.siblingFieldset.classList.remove(classes$4.visible);
-        }, 100);
-      }
-    }
+          limitVisibleSwatches() {
+            const isMobile = theme.isMobile;
+            const mobileColumnsElement = this.querySelector(`[${attributes$3.mobileColumnsSmall}]`);
+            const isMobileSwatches = mobileColumnsElement?.getAttribute(attributes$3.mobileColumnsSmall) === 'true';
 
-    if (!customElements.get('product-siblings')) {
-      customElements.define('product-siblings', ProductSiblings);
+            // Early return if no swatches or mobile conditions not met
+            if (!this.siblingLinks?.length || (isMobile && !isMobileSwatches)) {
+              return;
+            }
+
+            // For desktop, only proceed if style is 'limited'
+            if (!isMobile && this.swatchesStyle !== 'limited') {
+              // Reset display for all swatches on desktop for other styles
+              this.siblingLinks.forEach((swatch) => {
+                swatch.style.display = '';
+              });
+              // Remove the limited count element if it exists
+              const limitedCountElement = this.querySelector('.swatch-limited');
+              if (limitedCountElement) {
+                limitedCountElement.remove();
+              }
+              return;
+            }
+
+            const maxVisible = isMobile ? 3 : 5;
+            const totalSwatches = this.siblingLinks.length;
+            const visibleSwatches = Math.min(maxVisible, totalSwatches);
+            const remainingSwatches = totalSwatches - visibleSwatches;
+
+            // Update swatch visibility in a single pass
+            this.siblingLinks.forEach((swatch, index) => {
+              swatch.style.display = index < visibleSwatches ? '' : 'none';
+            });
+
+            // Handle remaining count display
+            const limitedCountElement = this.querySelector('.swatch-limited');
+            if (remainingSwatches > 0) {
+              if (!limitedCountElement) {
+                const newCountElement = document.createElement('div');
+                newCountElement.className = 'swatch-limited';
+                newCountElement.textContent = `+${remainingSwatches}`;
+                mobileColumnsElement?.appendChild(newCountElement);
+              } else {
+                limitedCountElement.textContent = `+${remainingSwatches}`;
+              }
+            } else if (limitedCountElement) {
+              limitedCountElement.remove();
+            }
+          }
+        }
+      );
     }
 
     /**
@@ -7794,7 +7165,7 @@
         },
       };
 
-      const finalize = (wrapper, section) => {
+      const finalize = (wrapper, section, onComplete) => {
         wrapper.classList.remove('hidden');
         const cookieItemsLength = cookie.read().length;
 
@@ -7827,16 +7198,16 @@
         }
 
         // If we have a callback.
-        if (config.onComplete) {
+        if (onComplete) {
           try {
-            config.onComplete(wrapper, section);
+            onComplete(wrapper, section);
           } catch (error) {
             console.log(error);
           }
         }
       };
 
-      const moveAlong = (shown, productHandleQueue, wrapper, section, target, howManyToShow) => {
+      const moveAlong = (shown, productHandleQueue, wrapper, section, target, howManyToShow, onComplete) => {
         if (productHandleQueue.length && shown < howManyToShow) {
           fetch(`${window.theme.routes.root}products/${productHandleQueue[0]}?section_id=${target}`)
             .then((response) => response.text())
@@ -7853,25 +7224,29 @@
 
               productHandleQueue.shift();
               shown++;
-              moveAlong(shown, productHandleQueue, wrapper, section, target, howManyToShow);
+              moveAlong(shown, productHandleQueue, wrapper, section, target, howManyToShow, onComplete);
             })
             .catch(() => {
               cookie.remove(productHandleQueue[0]);
               productHandleQueue.shift();
-              moveAlong(shown, productHandleQueue, wrapper, section, target, howManyToShow);
+              moveAlong(shown, productHandleQueue, wrapper, section, target, howManyToShow, onComplete);
             });
         } else {
-          finalize(wrapper, section);
+          finalize(wrapper, section, onComplete);
         }
       };
 
       return {
         showRecentlyViewed: function (params) {
+          if (Shopify.visualPreviewMode) return;
+
           const paramsNew = params || {};
           const shown = 0;
 
           // Update defaults.
           Object.assign(config, paramsNew);
+
+          const onComplete = config.onComplete;
 
           // Read cookie.
           productHandleQueue = cookie.read();
@@ -7886,7 +7261,7 @@
           // If we have any to show.
           if (config.howManyToShow && wrapper) {
             // Getting each product with an Ajax call and rendering it on the page.
-            moveAlong(shown, productHandleQueue, wrapper, config.section, config.target, howManyToShowItems);
+            moveAlong(shown, productHandleQueue, wrapper, config.section, config.target, howManyToShowItems, onComplete);
           }
         },
 
@@ -7952,7 +7327,7 @@
       flickityPrevArrow: '.flickity-button.previous',
       link: 'a:not(.btn)',
       productItemImage: '.product-item__image',
-      section: '[data-section-type]',
+      section: '[data-section-id]',
       slide: '[data-slide]',
       slideValue: 'data-slide',
       sliderThumb: '[data-slider-thumb]',
@@ -7987,13 +7362,17 @@
             super();
 
             this.flkty = null;
-            this.slides = this.querySelectorAll(selectors$3.slide);
-            this.thumbs = this.querySelectorAll(selectors$3.sliderThumb);
-            this.section = this.closest(selectors$3.section);
             this.bindEvents();
           }
 
           connectedCallback() {
+            this.slides = this.querySelectorAll(selectors$3.slide);
+            this.thumbs = this.querySelectorAll(selectors$3.sliderThumb);
+            this.section = this.closest(selectors$3.section);
+            this.initSlider();
+          }
+
+          initSlider() {
             if (this.slides.length <= 1) return;
 
             if (this.hasAttribute(attributes$2.sliderOptions)) {
@@ -8003,22 +7382,25 @@
             this.classList.add(classes$3.isLoading);
 
             let slideSelector = selectors$3.slide;
-            const isDesktopView = !window.theme.isMobile();
-            const slideMobile = `${selectors$3.slide}:not(.${classes$3.mobile})`;
-            const slideDesktop = `${selectors$3.slide}:not(.${classes$3.desktop})`;
+            const isDesktopView = !theme.isMobile;
+            const slideDesktop = `${selectors$3.slide}:not(.${classes$3.mobile})`;
+            const slideMobile = `${selectors$3.slide}:not(.${classes$3.desktop})`;
             const hasDeviceSpecificSelectors = this.querySelectorAll(slideDesktop).length || this.querySelectorAll(slideMobile).length;
 
             if (hasDeviceSpecificSelectors) {
               if (isDesktopView) {
-                slideSelector = slideMobile;
-              } else {
                 slideSelector = slideDesktop;
+              } else {
+                slideSelector = slideMobile;
               }
+
+              this.flkty?.destroy();
             }
 
             if (this.querySelectorAll(slideSelector).length <= 1) {
               this.classList.add(classes$3.singleSlide);
               this.classList.remove(classes$3.isLoading);
+              return;
             }
 
             this.sliderOptions = {
@@ -8073,7 +7455,7 @@
               },
             };
 
-            this.initSlider();
+            this.initFlickity();
 
             this.flkty.on('change', () => this.slideActions(true));
 
@@ -8090,7 +7472,7 @@
             }
           }
 
-          initSlider() {
+          initFlickity() {
             if (this.sliderOptions.fade) {
               this.flkty = new window.theme.FlickityFade(this, this.sliderOptions);
             } else {
@@ -8136,6 +7518,7 @@
           slideActions(changeEvent = false) {
             const currentSlide = this.querySelector(`.${classes$3.isSelected}`);
             if (!currentSlide) return;
+
             const currentSlideTextColor = currentSlide.hasAttribute(attributes$2.slideTextColor) ? currentSlide.getAttribute(attributes$2.slideTextColor) : '';
             const currentSlideLink = currentSlide.querySelector(selectors$3.link);
             const buttons = this.querySelectorAll(`${selectors$3.slide} a, ${selectors$3.slide} button`);
@@ -8167,15 +7550,15 @@
           }
 
           positionArrows() {
-            if (this.hasAttribute(attributes$2.arrowPositionMiddle) && this.sliderOptions.prevNextButtons) {
-              const itemImage = this.querySelector(selectors$3.collectionImage) || this.querySelector(selectors$3.productItemImage) || this.querySelector(selectors$3.columnImage);
+            if (!this.hasAttribute(attributes$2.arrowPositionMiddle) || !this.sliderOptions.prevNextButtons) return;
 
-              // Prevent 'clientHeight' of null error if no image
-              if (!itemImage) return;
+            const itemImage = this.querySelector(selectors$3.collectionImage) || this.querySelector(selectors$3.productItemImage) || this.querySelector(selectors$3.columnImage);
 
-              this.querySelector(selectors$3.flickityPrevArrow).style.top = itemImage.clientHeight / 2 + 'px';
-              this.querySelector(selectors$3.flickityNextArrow).style.top = itemImage.clientHeight / 2 + 'px';
-            }
+            // Prevent 'clientHeight' of null error if no image
+            if (!itemImage) return;
+
+            this.querySelector(selectors$3.flickityPrevArrow).style.top = itemImage.clientHeight / 2 + 'px';
+            this.querySelector(selectors$3.flickityNextArrow).style.top = itemImage.clientHeight / 2 + 'px';
           }
 
           disconnectedCallback() {
@@ -8445,7 +7828,10 @@
 
             const section = this.closest(selectors.sectionId);
             const colorSchemeClass = Array.from(section.classList).find((cls) => cls.startsWith('color-scheme-'));
-            tooltipTarget?.classList.add(colorSchemeClass); // add the section's color scheme class to the tooltip
+
+            if (colorSchemeClass) {
+              tooltipTarget?.classList.add(colorSchemeClass); // add the section's color scheme class to the tooltip
+            }
 
             if (this.label && tooltipTarget && ((stopMouseEnter && !this.hasAttribute(selectors.tooltipStopMouseEnter)) || !stopMouseEnter)) {
               const tooltipTargetArrow = tooltipTarget.querySelector(`.${classes.tooltipDefault}__arrow`);
@@ -8462,7 +7848,7 @@
               let tooltipTargetPositionLeft = tooltipRect.left - tooltipTargetWidth / 2 + tooltipWidth / 2;
               const tooltipLeftWithWidth = tooltipTargetPositionLeft + tooltipTargetWidth;
               const sideOffset = 24;
-              const tooltipTargetWindowDifference = tooltipLeftWithWidth - window.theme.getWindowWidth() + sideOffset;
+              const tooltipTargetWindowDifference = tooltipLeftWithWidth - theme.windowWidth + sideOffset;
 
               if (tooltipTargetWindowDifference > 0) {
                 tooltipTargetPositionLeft -= tooltipTargetWindowDifference;
@@ -8517,120 +7903,39 @@
       );
     }
 
-    function getScript(url, callback, callbackError) {
-      let head = document.getElementsByTagName('head')[0];
-      let done = false;
-      let script = document.createElement('script');
-      script.src = url;
-
-      // Attach handlers for all browsers
-      script.onload = script.onreadystatechange = function () {
-        if (!done && (!this.readyState || this.readyState == 'loaded' || this.readyState == 'complete')) {
-          done = true;
-          callback();
-        } else {
-          callbackError();
-        }
-      };
-
-      head.appendChild(script);
-    }
-
-    const loaders = {};
-
-    function loadScript(options = {}) {
-      if (!options.type) {
-        options.type = 'json';
+    class VariantSelects extends HTMLElement {
+      constructor() {
+        super();
       }
 
-      if (options.url) {
-        if (loaders[options.url]) {
-          return loaders[options.url];
-        } else {
-          return getScriptWithPromise(options.url, options.type);
-        }
-      } else if (options.json) {
-        if (loaders[options.json]) {
-          return Promise.resolve(loaders[options.json]);
-        } else {
-          return window
-            .fetch(options.json)
-            .then((response) => {
-              return response.json();
-            })
-            .then((response) => {
-              loaders[options.json] = response;
-              return response;
-            });
-        }
-      } else if (options.name) {
-        const key = ''.concat(options.name, options.version);
-        if (loaders[key]) {
-          return loaders[key];
-        } else {
-          return loadShopifyWithPromise(options);
-        }
-      } else {
-        return Promise.reject();
-      }
-    }
+      connectedCallback() {
+        this.addEventListener('change', (event) => {
+          const target = this.getInputForEventTarget(event.target);
 
-    function getScriptWithPromise(url, type) {
-      const loader = new Promise((resolve, reject) => {
-        if (type === 'text') {
-          fetch(url)
-            .then((response) => response.text())
-            .then((data) => {
-              resolve(data);
-            })
-            .catch((error) => {
-              reject(error);
-            });
-        } else {
-          getScript(
-            url,
-            function () {
-              resolve();
+          publish(theme.PUB_SUB_EVENTS.optionValueSelectionChange, {
+            data: {
+              event,
+              target,
+              selectedOptionValues: this.selectedOptionValues,
             },
-            function () {
-              reject();
-            }
-          );
-        }
-      });
+          });
+        });
+      }
 
-      loaders[url] = loader;
-      return loader;
-    }
+      getInputForEventTarget(target) {
+        return target.tagName === 'SELECT' ? target.selectedOptions[0] : target;
+      }
 
-    function loadShopifyWithPromise(options) {
-      const key = ''.concat(options.name, options.version);
-      const loader = new Promise((resolve, reject) => {
-        try {
-          window.Shopify.loadFeatures([
-            {
-              name: options.name,
-              version: options.version,
-              onLoad: (err) => {
-                onLoadFromShopify(resolve, reject, err);
-              },
-            },
-          ]);
-        } catch (err) {
-          reject(err);
-        }
-      });
-      loaders[key] = loader;
-      return loader;
-    }
+      get selectedOptionValues() {
+        const selectedNativeDropdowns = Array.from(this.querySelectorAll('select option[selected]'));
+        const selectedRadios = Array.from(this.querySelectorAll('fieldset input:checked'));
+        const selectedPopouts = Array.from(this.querySelectorAll('[data-popout-input]'));
 
-    function onLoadFromShopify(resolve, reject, err) {
-      if (err) {
-        return reject(err);
-      } else {
-        return resolve();
+        return [...selectedNativeDropdowns, ...selectedRadios, ...selectedPopouts].map(({dataset}) => dataset.optionValueId).filter((id) => Boolean(id));
       }
     }
+
+    customElements.define('variant-selects', VariantSelects);
 
     document.addEventListener('DOMContentLoaded', function () {
       // Scroll to top button
@@ -8650,12 +7955,6 @@
 
       if (window.self !== window.top) {
         document.querySelector('html').classList.add('iframe');
-      }
-
-      // Safari smoothscroll polyfill
-      let hasNativeSmoothScroll = 'scrollBehavior' in document.documentElement.style;
-      if (!hasNativeSmoothScroll) {
-        loadScript({url: window.theme.assets.smoothscroll});
       }
     });
 

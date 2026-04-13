@@ -1,6 +1,8 @@
 <!-- /sections/overlay-newsletter.liquid -->
 {%- assign color_scheme = 'color-' | append: section.settings.color_scheme -%}
 
+{%- render 'stylesheet', name: 'popup.css' -%}
+
 <div data-section-id="{{ section.id }}" data-section-type="popups">
   {%- for block in section.blocks -%}
     {%- liquid
@@ -85,6 +87,8 @@
     {%- if show_popup -%}
       {%- case block.type -%}
         {%- when 'large-newsletter' -%}
+          {%- render 'stylesheet', name: 'modal.css' -%}
+
           <popup-newsletter {{ block.shopify_attributes }}>
             <dialog
               class="modal__overlay modal__overlay--default modal__overlay--newsletter{% unless block.settings.newsletter_enable %} is-visible{% endunless %}"
@@ -96,7 +100,7 @@
               {{ block_attributes }}
             >
               <form method="dialog">
-                <button class="visually-hidden no-js" aria-label="{{ 'general.accessibility.close' | t }}"></button>
+                <button class="visually-hidden" aria-label="{{ 'general.accessibility.close' | t }}"></button>
               </form>
 
               <div
@@ -141,7 +145,7 @@
                   </div>
                 </div>
 
-                <button data-popup-close class="close" title="{{ 'general.accessibility.close' | t }}" autofocus>
+                <button data-popup-close class="close" title="{{ 'general.accessibility.close' | t }}">
                   {%- render 'icon-cancel' -%}
                 </button>
               </div>
@@ -149,6 +153,8 @@
           </popup-newsletter>
 
         {%- when 'small-newsletter' -%}
+          {%- render 'stylesheet', name: 'small-newsletter.css' -%}
+
           <popup-newsletter class="newsletter__outer" {{ block.shopify_attributes }}>
             <div class="newsletter__inner">
               <dialog
@@ -160,7 +166,7 @@
                 {{ popup_attributes }}
               >
                 <form method="dialog">
-                  <button class="visually-hidden no-js" aria-label="{{ 'general.accessibility.close' | t }}"></button>
+                  <button class="visually-hidden" aria-label="{{ 'general.accessibility.close' | t }}"></button>
                 </form>
 
                 {%- if block.settings.heading != blank -%}
@@ -217,7 +223,7 @@
           "type": "image_picker",
           "id": "image",
           "label": "Image",
-          "info": "Optional. 1400 x 1400px .jpg recommended. [Learn more](https://invisiblethemes.com/link/broadcast/images)"
+          "info": "Optional. 1400 x 1400px .jpg recommended. [Learn more](http://presidiodev.com/link/broadcast/images)"
         },
         {
           "type": "text",
@@ -251,12 +257,6 @@
           "default": true
         },
         {
-          "type": "checkbox",
-          "id": "show_name",
-          "label": "Show name field",
-          "default": false
-        },
-        {
           "type": "text",
           "id": "button_text",
           "label": "Button text",
@@ -276,13 +276,20 @@
           "info": "Recommended if your online store preferences have spam protection enabled."
         },
         {
+          "type": "checkbox",
+          "id": "show_name",
+          "label": "Show name field",
+          "default": false
+        },
+        {
           "type": "header",
-          "content": "Button",
-          "info": "Applies if \"Show name field\" is enabled."
+          "visible_if": "{{ block.settings.show_name }}",
+          "content": "Button"
         },
         {
           "type": "select",
           "id": "button_type",
+          "visible_if": "{{ block.settings.show_name }}",
           "label": "Color",
           "default": "btn--primary",
           "options": [
@@ -295,6 +302,7 @@
         {
           "type": "select",
           "id": "button_size",
+          "visible_if": "{{ block.settings.show_name }}",
           "label": "Size",
           "default": "",
           "options": [
@@ -306,6 +314,7 @@
         {
           "type": "select",
           "id": "button_style",
+          "visible_if": "{{ block.settings.show_name }}",
           "label": "Style",
           "default": "btn--solid",
           "options": [
@@ -341,12 +350,14 @@
         {
           "type": "color",
           "id": "bg_color",
-          "label": "Background"
+          "label": "Background",
+          "alpha": true
         },
         {
           "type": "color",
           "id": "color",
-          "label": "Text"
+          "label": "Text",
+          "alpha": true
         },
         {
           "type": "header",
@@ -469,12 +480,14 @@
         {
           "type": "color",
           "id": "bg_color",
-          "label": "Background"
+          "label": "Background",
+          "alpha": true
         },
         {
           "type": "color",
           "id": "color",
-          "label": "Text"
+          "label": "Text",
+          "alpha": true
         },
         {
           "type": "header",
@@ -529,6 +542,7 @@
   "presets": [
     {
       "name": "Newsletter",
+      "category": "Forms",
       "blocks": [
         {
           "type": "large-newsletter"
