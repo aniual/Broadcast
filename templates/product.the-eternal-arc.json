@@ -1,1 +1,373 @@
-{"sections":{"main":{"type":"product","blocks":{"title":{"type":"title","settings":{"subheading_option":"none","padding_bottom":8}},"price":{"type":"price","settings":{"padding_bottom":16}},"fcda78fc-ac6f-4567-ab39-423557e68f15":{"type":"text","settings":{"title":"","text":"<p><a href=\"\/pages\/size-guide\" target=\"_blank\" title=\"Size Guide\">{{ product.metafields.Rings.size_guide.value }}<\/a><\/p>","padding_bottom":16}},"variants":{"type":"variants","settings":{"info_page":"","subscriptions_enable_selectors":false,"padding_bottom":16}},"buttons":{"type":"buttons","settings":{"show_quantity":true,"show_payment_button":false,"show_gift_card_recipient":false,"padding_bottom":32}},"tabs":{"type":"tab_richtext","settings":{"show_read_more":true,"title_1":"Description","raw_content_1":"<p>{{ product.metafields.product1.description | metafield_tag }}<\/p>","title_2":"Details","raw_content_2":"<p>{{ product.metafields.product1.details | metafield_tag }}<\/p>","title_3":"2-Year Warranty","raw_content_3":"<p>Agvana offers a 2-year warranty on all products. <\/p><p>Each piece of jewelry is rigorously tested to ensure that it is long-lasting, anti-allergic, and waterproof. <\/p><p>If for any reason you are not satisfied with your jewelry purchase, we will provide you with a 2-year warranty. No risk, no reward.<\/p>","title_4":"","raw_content_4":"","title_5":"","raw_content_5":"","padding_bottom":0}},"divider_1":{"type":"divider","settings":{"show_line":true,"padding_bottom":16}},"upsell":{"type":"upsell","disabled":true,"settings":{"upsell_product":"","bg_color":"","padding_bottom":16}},"icon_1":{"type":"icon","settings":{"icon_name":"icon-email","icon_size":20,"icon_color":"#545454","width":"full","padding_bottom":16}},"icon_2":{"type":"icon","settings":{"icon_name":"icon-gift","icon_size":20,"icon_color":"#545454","width":"full","padding_bottom":16}},"374f9c2e-c73b-4a68-92d0-2c873d7d8e7c":{"type":"icon","settings":{"icon_name":"icon-shield","icon_size":20,"icon_color":"#545454","width":"full","padding_bottom":16}}},"block_order":["title","price","fcda78fc-ac6f-4567-ab39-423557e68f15","variants","buttons","tabs","divider_1","upsell","icon_1","icon_2","374f9c2e-c73b-4a68-92d0-2c873d7d8e7c"],"settings":{"product_sticky_enable":true,"show_cart_bar":true,"enable_zoom":true,"enable_video_looping":false,"image_layout":"thumbnails","image_size":"normal","mobile_image_style":"thumbs","padding_top":90,"padding_bottom":30}},"section_custom_content_iTYpaE":{"type":"section-custom-content","blocks":{"image_rGKqBf":{"type":"image","settings":{"image":"shopify:\/\/shop_images\/agvanajewelry_471395843_618795997341559_1760418916646263680_n.jpg","title":"","flex_align":"align--middle-center","bg_color":"","color":"#ffffff","overlay_opacity":0,"overlay_color":"#000000","show_overlay_text":false,"link_text":"","link":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false}},"text_HhnHP3":{"type":"text","settings":{"subheading":"Agvana","title":"Customer Show","text":"<p>The craftsmanship is impeccable, and the way the diamond is set makes it even more stunning. It’s a reminder of the love and commitment we share, and every time I look at it, I’m reminded of how lucky I am to have such a wonderful partner. The fact that it’s a lab-grown diamond makes it even more meaningful, knowing that it’s a beautiful, sustainable, and ethical choice.<\/p>","button_text":"On Instagram","button_url":"https:\/\/www.instagram.com\/p\/DENpOYFNZBO\/","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"show_social_links":false,"text_columns":1,"align_text":"text-left","bg_color":"","color":""}}},"block_order":["image_rGKqBf","text_HhnHP3"],"settings":{"borders":false,"width":"wrapper--full-padded","height":"screen-height-one-half","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"padding_top":0,"padding_bottom":28}},"faq":{"type":"section-accordion","blocks":{"faq-1":{"type":"text","settings":{"title":"What is the return policy?","text":"<p>If you're not 100% satisfied with your purchase, we guarantee a rapid and convenient return process.<strong>U.S. Hassle-<\/strong><a href=\"https:\/\/agvana.com\/pages\/shipping-returns\" title=\"https:\/\/agvana.com\/pages\/shipping-returns\"><strong>Free Returns<\/strong><\/a><\/p><p>You may return some item(s) within 60 days from when the order was placed.<\/p><p>1. Sign into your account.<br\/>2. Find the order in My Orders, click the “Return Item” button.<br\/>3. Select the item(s) you would like to return, indicate the reasons, and submit.<br\/>4. Print the return label and securely tape it on the outside of your return package.<br\/>5. Call the post office to arrange a collection or drop off at your nearest post office.<\/p><p>If you prefer to return the item(s) using the mail carrier of your choice instead, please ship the item(s) you are returning to us at the following address (the shipping charges must be paid by customer in this case. We also recommend using the shipping method with tracking to ensure safe and timely delivery of your return):<br\/><br\/>Hehe Investment Inc.<br\/>Returns<br\/>261 Madison Avenue 9th Floor<\/p><p>New York, NY 10016<br\/><br\/>Please ensure that the return is executed with care to avoid any damage to the returned items.<br\/><br\/>Once the returned item(s) are received and inspected by <a href=\"https:\/\/agvana.com\/\" target=\"_blank\" title=\"agvana jewelry\">AGVANA.COM<\/a>, the refund for eligible returns (unused and undamaged items in original packaging) will be processed within two weeks. Please note the refunds will be released to the original method of payment.<br\/><br\/>If you have any questions in regards to your returns or exchanges, please contact us at service@agvana.com.<\/p>"}},"faq-2":{"type":"text","settings":{"title":"How can I track my order?","text":"<p><strong>Have an account?<\/strong><\/p><p>Great! Login and head over to your Agvana account and select \"My Orders\" to review your order status. Once your order is packed and ready to ship, you’ll receive a tracking number via email so you can keep an eye on its activity while it makes its way to you.<\/p><p><strong>Don't have an account?<\/strong><\/p><p>No worries! You can still create an account now using the same email address used to place the order and it will appear under \"My Orders\". Tracking numbers are automatically sent as soon as your order is packed! Once the courier picks up the package and scans it into the system, the tracking number can be used to see the information about your order. This may take a couple hours and if the order was packed on the weekend, it will be updated next available business day!<\/p><p><\/p><p>STATUS<\/p><p>WHAT DOES THIS MEAN?<\/p><p>Processing<\/p><p>Your order has been handed over to our team to fulfil. If all items in your order are in-stock, typical processing time is 1-2 business days!<\/p><p>Shipped<\/p><p>Yay! Your order has been packed and is on the way to you. Kindly note that the tracking may take some time to be scanned into the courier's system to reflect any activity or movement.<\/p><p>Partial<\/p><p>Oh, looks like your order has a backorder or made-to-order piece! To ensure you can get started on enjoying your Agvana piece as early as possible, we've shipped the available pieces first.<\/p>"}},"faq-3":{"type":"text","settings":{"title":"Can I cancel or update my order? or change my shipping address?","text":"<p>If you need to make any changes to your order, including adjusting and cancelling of the order, or changing the shipping address, please reach out within 24 hours of placing the order. Kindly note that as our team works hard to get your order dispatched as quickly as possible, we may not be able to cancel or update your order upon request.<\/p>"}},"faq-4":{"type":"text","settings":{"title":"Do you have a warranty?","text":"<p>Under our warranty, we’ve got your back. This means that for 2 years from the date of purchase, we’ll take care of your product if any damage to the material or the workmanship of the jewelry occurs.<\/p><p>We work with top manufacturers to create handcrafted, responsibly sourced pieces that are made to last. We’re confident in the quality of our product hence the 2-year coverage. This also means that the warranty does not cover lost items, scratches that come with normal wear and tear (like a bent ring or broken chain), improper use or storage of your product, and any modification to your product done by a third party outside of Agvana.<\/p><p>Please submit any warranty requests and our team will follow up with you within 1-2 business days with additional details<\/p><p><strong>Important<\/strong><\/p><p>1. Items purchased through a third-party vendor (outside of <a href=\"https:\/\/agvana.com\/\" title=\"https:\/\/Agvana.com\">Agvana.com<\/a> and\/or Amazon stores) are not covered under Agvana’s warranty. Please reach out to the company the items were purchased from.<\/p><p>2. We do not recommend having our products worked on by outside jewellers as this voids any potential for refund or replacement (should a defect develop due to their work). This includes resizing or any type of repair work. Although we do not offer any repair or resizing service, if your Agvana piece is defective and covered under the warranty, please contect us.<\/p>"}}},"block_order":["faq-1","faq-2","faq-3","faq-4"],"settings":{"title":"Frequently Asked","width":"wrapper","padding_top":30,"padding_bottom":0}},"about":{"type":"section-accordion","blocks":{"about-0":{"type":"image","settings":{"title":"Sustainable sourcing","text":"<p>We are committed to quality products that are manufactured ethically and sustainably. All of our pieces are traceable throughout the supply chain. We strive to ensure our products contribute to the well-being of people and planet, and our efforts put us on track towards a brighter future.<\/p>","image":"shopify:\/\/shop_images\/AG__agvana_product_page1.jpg","aspect_ratio":0.6}},"about-1":{"type":"image","settings":{"title":"Ethical labor","text":"<p>Cheap, disposable jewelry creates an incentive structure to bid out the work to the cheapest factory available. We need to vote with our dollars for a more equitable world.<\/p>","image":"shopify:\/\/shop_images\/AG__agvana_product_page2.jpg","aspect_ratio":0.6}},"about-2":{"type":"image","settings":{"title":"Transparent values","text":"<p>We hold true to to who we are. We believe in equality and justice for all, and those beliefs permeate the work that we do and the jewelry we make. Everything we do stands for our values and we try to think, speak, and act in a framework of positive change. Cast out your voice and make a difference.<\/p>","image":"shopify:\/\/shop_images\/AG__agvana_product_page3.jpg","aspect_ratio":0.6}}},"block_order":["about-0","about-1","about-2"],"settings":{"title":"Sourcing & Materials","width":"wrapper","padding_top":0,"padding_bottom":30}},"173217952088d41ffb":{"type":"apps","settings":{"include_margins":false}},"f5034cb1-d871-4792-b5ea-7aa35122b7ab":{"type":"section-custom-content","blocks":{"template--16080812245152__f5034cb1-d871-4792-b5ea-7aa35122b7ab-image-1":{"type":"image","settings":{"image":"shopify:\/\/shop_images\/0S0A7445_27a17db4-a2a9-40c9-a0b8-6dcca03d355e.jpg","title":"","flex_align":"align--middle-center","bg_color":"","color":"#ffffff","overlay_opacity":0,"overlay_color":"#000000","show_overlay_text":false,"link_text":"Best Sellers","link":"shopify:\/\/collections\/all","button_type":"btn--primary","button_size":"btn--large","button_style":"btn--text","show_arrow":false}},"0f3e15f8-afc0-45c6-b3d5-2fd4bf7a19ca":{"type":"image","settings":{"image":"shopify:\/\/shop_images\/0S0A7568_cf732382-fdca-4453-879f-179af54d3c69.jpg","title":"","flex_align":"align--middle-center","bg_color":"","color":"#ffffff","overlay_opacity":0,"overlay_color":"#000000","show_overlay_text":false,"link_text":"Edit Picks","link":"shopify:\/\/collections\/all","button_type":"btn--primary","button_size":"btn--large","button_style":"btn--text","show_arrow":false}}},"block_order":["template--16080812245152__f5034cb1-d871-4792-b5ea-7aa35122b7ab-image-1","0f3e15f8-afc0-45c6-b3d5-2fd4bf7a19ca"],"settings":{"borders":false,"width":"wrapper--full-padded","height":"screen-height-one-half","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"padding_top":0,"padding_bottom":0}},"related":{"type":"related","blocks":{"related":{"type":"related","settings":{"product_recommendations_heading":"Related products","limit":4}},"recent":{"type":"recent","settings":{"product_recently_heading":"Recently viewed","product_recently_limit":4}}},"block_order":["related","recent"],"settings":{"enable_tabs":true,"padding_top":30,"padding_bottom":0}}},"order":["main","section_custom_content_iTYpaE","faq","about","173217952088d41ffb","f5034cb1-d871-4792-b5ea-7aa35122b7ab","related"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "product",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {
+            "subheading_option": "none",
+            "padding_bottom": 8
+          }
+        },
+        "price": {
+          "type": "price",
+          "settings": {
+            "padding_bottom": 16
+          }
+        },
+        "fcda78fc-ac6f-4567-ab39-423557e68f15": {
+          "type": "text",
+          "settings": {
+            "title": "",
+            "text": "<p><a href=\"/pages/size-guide\" target=\"_blank\" title=\"Size Guide\">{{ product.metafields.Rings.size_guide.value }}</a></p>",
+            "padding_bottom": 16
+          }
+        },
+        "variants": {
+          "type": "variants",
+          "settings": {
+            "info_page": "",
+            "padding_bottom": 16
+          }
+        },
+        "buttons": {
+          "type": "buttons",
+          "settings": {
+            "show_quantity": true,
+            "show_gift_card_recipient": false,
+            "padding_bottom": 32
+          }
+        },
+        "tabs": {
+          "type": "tab_richtext",
+          "settings": {
+            "show_read_more": true,
+            "title_1": "Description",
+            "raw_content_1": "<p>{{ product.metafields.product1.description | metafield_tag }}</p>",
+            "title_2": "Details",
+            "raw_content_2": "<p>{{ product.metafields.product1.details | metafield_tag }}</p>",
+            "title_3": "2-Year Warranty",
+            "raw_content_3": "<p>Agvana offers a 2-year warranty on all products. </p><p>Each piece of jewelry is rigorously tested to ensure that it is long-lasting, anti-allergic, and waterproof. </p><p>If for any reason you are not satisfied with your jewelry purchase, we will provide you with a 2-year warranty. No risk, no reward.</p>",
+            "title_4": "",
+            "raw_content_4": "",
+            "title_5": "",
+            "raw_content_5": "",
+            "padding_bottom": 0
+          }
+        },
+        "divider_1": {
+          "type": "divider",
+          "settings": {
+            "show_line": true,
+            "padding_bottom": 16
+          }
+        },
+        "upsell": {
+          "type": "upsell",
+          "disabled": true,
+          "settings": {
+            "upsell_product": "",
+            "bg_color": "",
+            "padding_bottom": 16
+          }
+        },
+        "icon_1": {
+          "type": "icon",
+          "settings": {
+            "icon_name": "icon-email",
+            "icon_size": 20,
+            "icon_color": "#545454",
+            "width": "full",
+            "padding_bottom": 16
+          }
+        },
+        "icon_2": {
+          "type": "icon",
+          "settings": {
+            "icon_name": "icon-gift",
+            "icon_size": 20,
+            "icon_color": "#545454",
+            "width": "full",
+            "padding_bottom": 16
+          }
+        },
+        "374f9c2e-c73b-4a68-92d0-2c873d7d8e7c": {
+          "type": "icon",
+          "settings": {
+            "icon_name": "icon-shield",
+            "icon_size": 20,
+            "icon_color": "#545454",
+            "width": "full",
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "title",
+        "price",
+        "fcda78fc-ac6f-4567-ab39-423557e68f15",
+        "variants",
+        "buttons",
+        "tabs",
+        "divider_1",
+        "upsell",
+        "icon_1",
+        "icon_2",
+        "374f9c2e-c73b-4a68-92d0-2c873d7d8e7c"
+      ],
+      "settings": {
+        "product_sticky_enable": true,
+        "show_cart_bar": true,
+        "enable_zoom": true,
+        "enable_video_looping": false,
+        "image_layout": "thumbnails",
+        "image_size": "normal",
+        "mobile_image_style": "thumbs",
+        "padding_top": 90,
+        "padding_bottom": 30
+      }
+    },
+    "section_custom_content_iTYpaE": {
+      "type": "section-custom-content",
+      "blocks": {
+        "image_rGKqBf": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/agvanajewelry_471395843_618795997341559_1760418916646263680_n.jpg",
+            "title": "",
+            "flex_align": "align--middle-center",
+            "bg_color": "",
+            "color": "#ffffff",
+            "link_text": "",
+            "link": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false
+          }
+        },
+        "text_HhnHP3": {
+          "type": "text",
+          "settings": {
+            "subheading": "Agvana",
+            "title": "Customer Show",
+            "text": "<p>The craftsmanship is impeccable, and the way the diamond is set makes it even more stunning. It’s a reminder of the love and commitment we share, and every time I look at it, I’m reminded of how lucky I am to have such a wonderful partner. The fact that it’s a lab-grown diamond makes it even more meaningful, knowing that it’s a beautiful, sustainable, and ethical choice.</p>",
+            "button_text": "On Instagram",
+            "button_url": "https://www.instagram.com/p/DENpOYFNZBO/",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "show_social_links": false,
+            "text_columns": 1,
+            "align_text": "text-left",
+            "bg_color": "",
+            "color": ""
+          }
+        }
+      },
+      "block_order": [
+        "image_rGKqBf",
+        "text_HhnHP3"
+      ],
+      "settings": {
+        "borders": false,
+        "width": "wrapper--full-padded",
+        "height": "screen-height-one-half",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "padding_top": 0,
+        "padding_bottom": 28
+      }
+    },
+    "faq": {
+      "type": "section-accordion",
+      "blocks": {
+        "faq-1": {
+          "type": "text",
+          "settings": {
+            "title": "What is the return policy?",
+            "text": "<p>If you're not 100% satisfied with your purchase, we guarantee a rapid and convenient return process.<strong>U.S. Hassle-</strong><a href=\"https://agvana.com/pages/shipping-returns\" title=\"https://agvana.com/pages/shipping-returns\"><strong>Free Returns</strong></a></p><p>You may return some item(s) within 60 days from when the order was placed.</p><p>1. Sign into your account.<br/>2. Find the order in My Orders, click the “Return Item” button.<br/>3. Select the item(s) you would like to return, indicate the reasons, and submit.<br/>4. Print the return label and securely tape it on the outside of your return package.<br/>5. Call the post office to arrange a collection or drop off at your nearest post office.</p><p>If you prefer to return the item(s) using the mail carrier of your choice instead, please ship the item(s) you are returning to us at the following address (the shipping charges must be paid by customer in this case. We also recommend using the shipping method with tracking to ensure safe and timely delivery of your return):<br/><br/>Hehe Investment Inc.<br/>Returns<br/>261 Madison Avenue 9th Floor</p><p>New York, NY 10016<br/><br/>Please ensure that the return is executed with care to avoid any damage to the returned items.<br/><br/>Once the returned item(s) are received and inspected by <a href=\"https://agvana.com/\" target=\"_blank\" title=\"agvana jewelry\">AGVANA.COM</a>, the refund for eligible returns (unused and undamaged items in original packaging) will be processed within two weeks. Please note the refunds will be released to the original method of payment.<br/><br/>If you have any questions in regards to your returns or exchanges, please contact us at service@agvana.com.</p>"
+          }
+        },
+        "faq-2": {
+          "type": "text",
+          "settings": {
+            "title": "How can I track my order?",
+            "text": "<p><strong>Have an account?</strong></p><p>Great! Login and head over to your Agvana account and select \"My Orders\" to review your order status. Once your order is packed and ready to ship, you’ll receive a tracking number via email so you can keep an eye on its activity while it makes its way to you.</p><p><strong>Don't have an account?</strong></p><p>No worries! You can still create an account now using the same email address used to place the order and it will appear under \"My Orders\". Tracking numbers are automatically sent as soon as your order is packed! Once the courier picks up the package and scans it into the system, the tracking number can be used to see the information about your order. This may take a couple hours and if the order was packed on the weekend, it will be updated next available business day!</p><p></p><p>STATUS</p><p>WHAT DOES THIS MEAN?</p><p>Processing</p><p>Your order has been handed over to our team to fulfil. If all items in your order are in-stock, typical processing time is 1-2 business days!</p><p>Shipped</p><p>Yay! Your order has been packed and is on the way to you. Kindly note that the tracking may take some time to be scanned into the courier's system to reflect any activity or movement.</p><p>Partial</p><p>Oh, looks like your order has a backorder or made-to-order piece! To ensure you can get started on enjoying your Agvana piece as early as possible, we've shipped the available pieces first.</p>"
+          }
+        },
+        "faq-3": {
+          "type": "text",
+          "settings": {
+            "title": "Can I cancel or update my order? or change my shipping address?",
+            "text": "<p>If you need to make any changes to your order, including adjusting and cancelling of the order, or changing the shipping address, please reach out within 24 hours of placing the order. Kindly note that as our team works hard to get your order dispatched as quickly as possible, we may not be able to cancel or update your order upon request.</p>"
+          }
+        },
+        "faq-4": {
+          "type": "text",
+          "settings": {
+            "title": "Do you have a warranty?",
+            "text": "<p>Under our warranty, we’ve got your back. This means that for 2 years from the date of purchase, we’ll take care of your product if any damage to the material or the workmanship of the jewelry occurs.</p><p>We work with top manufacturers to create handcrafted, responsibly sourced pieces that are made to last. We’re confident in the quality of our product hence the 2-year coverage. This also means that the warranty does not cover lost items, scratches that come with normal wear and tear (like a bent ring or broken chain), improper use or storage of your product, and any modification to your product done by a third party outside of Agvana.</p><p>Please submit any warranty requests and our team will follow up with you within 1-2 business days with additional details</p><p><strong>Important</strong></p><p>1. Items purchased through a third-party vendor (outside of <a href=\"https://agvana.com/\" title=\"https://Agvana.com\">Agvana.com</a> and/or Amazon stores) are not covered under Agvana’s warranty. Please reach out to the company the items were purchased from.</p><p>2. We do not recommend having our products worked on by outside jewellers as this voids any potential for refund or replacement (should a defect develop due to their work). This includes resizing or any type of repair work. Although we do not offer any repair or resizing service, if your Agvana piece is defective and covered under the warranty, please contect us.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "faq-1",
+        "faq-2",
+        "faq-3",
+        "faq-4"
+      ],
+      "settings": {
+        "title": "Frequently Asked",
+        "width": "wrapper",
+        "padding_top": 30,
+        "padding_bottom": 0
+      }
+    },
+    "about": {
+      "type": "section-accordion",
+      "blocks": {
+        "about-0": {
+          "type": "image",
+          "settings": {
+            "title": "Sustainable sourcing",
+            "text": "<p>We are committed to quality products that are manufactured ethically and sustainably. All of our pieces are traceable throughout the supply chain. We strive to ensure our products contribute to the well-being of people and planet, and our efforts put us on track towards a brighter future.</p>",
+            "image": "shopify://shop_images/AG__agvana_product_page1.jpg",
+            "aspect_ratio": 0.6
+          }
+        },
+        "about-1": {
+          "type": "image",
+          "settings": {
+            "title": "Ethical labor",
+            "text": "<p>Cheap, disposable jewelry creates an incentive structure to bid out the work to the cheapest factory available. We need to vote with our dollars for a more equitable world.</p>",
+            "image": "shopify://shop_images/AG__agvana_product_page2.jpg",
+            "aspect_ratio": 0.6
+          }
+        },
+        "about-2": {
+          "type": "image",
+          "settings": {
+            "title": "Transparent values",
+            "text": "<p>We hold true to to who we are. We believe in equality and justice for all, and those beliefs permeate the work that we do and the jewelry we make. Everything we do stands for our values and we try to think, speak, and act in a framework of positive change. Cast out your voice and make a difference.</p>",
+            "image": "shopify://shop_images/AG__agvana_product_page3.jpg",
+            "aspect_ratio": 0.6
+          }
+        }
+      },
+      "block_order": [
+        "about-0",
+        "about-1",
+        "about-2"
+      ],
+      "settings": {
+        "title": "Sourcing & Materials",
+        "width": "wrapper",
+        "padding_top": 0,
+        "padding_bottom": 30
+      }
+    },
+    "173217952088d41ffb": {
+      "type": "apps",
+      "settings": {
+        "include_margins": false
+      }
+    },
+    "f5034cb1-d871-4792-b5ea-7aa35122b7ab": {
+      "type": "section-custom-content",
+      "blocks": {
+        "template--16080812245152__f5034cb1-d871-4792-b5ea-7aa35122b7ab-image-1": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/0S0A7445_27a17db4-a2a9-40c9-a0b8-6dcca03d355e.jpg",
+            "title": "",
+            "flex_align": "align--middle-center",
+            "bg_color": "",
+            "color": "#ffffff",
+            "link_text": "Best Sellers",
+            "link": "shopify://collections/all",
+            "button_type": "btn--primary",
+            "button_size": "btn--large",
+            "button_style": "btn--text",
+            "show_arrow": false
+          }
+        },
+        "0f3e15f8-afc0-45c6-b3d5-2fd4bf7a19ca": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/0S0A7568_cf732382-fdca-4453-879f-179af54d3c69.jpg",
+            "title": "",
+            "flex_align": "align--middle-center",
+            "bg_color": "",
+            "color": "#ffffff",
+            "link_text": "Edit Picks",
+            "link": "shopify://collections/all",
+            "button_type": "btn--primary",
+            "button_size": "btn--large",
+            "button_style": "btn--text",
+            "show_arrow": false
+          }
+        }
+      },
+      "block_order": [
+        "template--16080812245152__f5034cb1-d871-4792-b5ea-7aa35122b7ab-image-1",
+        "0f3e15f8-afc0-45c6-b3d5-2fd4bf7a19ca"
+      ],
+      "settings": {
+        "borders": false,
+        "width": "wrapper--full-padded",
+        "height": "screen-height-one-half",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "related": {
+      "type": "related",
+      "blocks": {
+        "related": {
+          "type": "related",
+          "settings": {
+            "product_recommendations_heading": "Related products"
+          }
+        },
+        "recent": {
+          "type": "recent",
+          "settings": {
+            "product_recently_heading": "Recently viewed"
+          }
+        }
+      },
+      "block_order": [
+        "related",
+        "recent"
+      ],
+      "settings": {
+        "enable_tabs": true,
+        "padding_top": 30,
+        "padding_bottom": 0
+      }
+    }
+  },
+  "order": [
+    "main",
+    "section_custom_content_iTYpaE",
+    "faq",
+    "about",
+    "173217952088d41ffb",
+    "f5034cb1-d871-4792-b5ea-7aa35122b7ab",
+    "related"
+  ]
+}

@@ -1,1 +1,129 @@
-{"sections":{"hero":{"type":"collection-image-with-title","disabled":true,"settings":{"show_title":true,"show_description":true,"flex_align":"align--middle-left","color_scheme":"","show_text_background":false,"show_image":true,"banner_layout":"overlay","height":"screen-height-one-third","mobile_height":"screen-height-one-half--mobile","overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":0}},"section_hero_JTnDar":{"type":"section-hero","blocks":{"heading_tyCdzL":{"type":"heading","settings":{"title":"A Journey in Sparkle","heading_font_size":"heading-medium","heading_tag":"automatic"}},"text_7pxnfz":{"type":"text","settings":{"text":"<p>Discover your next chapter in diamonds.<\/p>","text_font_size":"body-large"}}},"block_order":["heading_tyCdzL","text_7pxnfz"],"settings":{"image_1":"shopify:\/\/shop_images\/2024-11-17_16-03-24_B_Radius8_Smoothing4.png","link":"","width":"wrapper--full","height":"seven-fifty-height-hero","flex_align_desktop":"align--middle-left-desktop","content_width":77,"mobile_image":"shopify:\/\/shop_images\/2024-11-17_16-03-24_B_Radius8_Smoothing4.jpg","mobile_height":"screen-height-one-half--mobile","flex_align_mobile":"align--middle-center-mobile","color_scheme":"","show_text_background":false,"overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":0,"show_placeholder":true}},"subcollections":{"type":"subcollections","settings":{"subcollection_layout":"grid","subcollection_description":false,"select_image":"collection","color_scheme":"","color":"#ffffff","bg_color":"","padding_top":20,"padding_bottom":20}},"main":{"type":"collection","blocks":{"d13a66a0-0c13-471b-999b-6ed0280b982a":{"type":"featured_image","disabled":true,"settings":{"featured_image":"shopify:\/\/shop_images\/lovelanguage.jpg","position":1,"featured_heading":"","heading_font_size":"heading-large","featured_text":"","featured_button_text":"","featured_button_link":"","button_type":"btn--primary","button_size":"btn--small","button_style":"btn--outline","show_arrow":false,"featured_color_text":"#ffffff","featured_color_overlay":"#222222","featured_overlay_opacity":0,"heading_tag":"automatic"}}},"block_order":["d13a66a0-0c13-471b-999b-6ed0280b982a"],"settings":{"enable_sort":true,"enable_filters":true,"filter_layout":"inline-open","default_open":true,"collection_linklist":"","grid":4,"grid_mobile":"2","products_per_page":24,"color_scheme":"","padding_top":50,"padding_bottom":0}}},"order":["hero","section_hero_JTnDar","subcollections","main"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "hero": {
+      "type": "collection-image-with-title",
+      "disabled": true,
+      "settings": {
+        "show_title": true,
+        "show_description": true,
+        "flex_align": "align--middle-left",
+        "color_scheme": "",
+        "show_text_background": false,
+        "show_image": true,
+        "banner_layout": "overlay",
+        "height": "screen-height-one-third",
+        "mobile_height": "screen-height-one-half--mobile",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "section_hero_JTnDar": {
+      "type": "section-hero",
+      "blocks": {
+        "heading_tyCdzL": {
+          "type": "heading",
+          "settings": {
+            "title": "A Journey in Sparkle",
+            "heading_font_size": "heading-medium",
+            "heading_tag": "automatic"
+          }
+        },
+        "text_7pxnfz": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Discover your next chapter in diamonds.</p>",
+            "text_font_size": "body-large"
+          }
+        }
+      },
+      "block_order": [
+        "heading_tyCdzL",
+        "text_7pxnfz"
+      ],
+      "settings": {
+        "image_1": "shopify://shop_images/2024-11-17_16-03-24_B_Radius8_Smoothing4.png",
+        "link": "",
+        "width": "wrapper--full",
+        "height": "seven-fifty-height-hero",
+        "flex_align_desktop": "align--middle-left-desktop",
+        "content_width": 77,
+        "mobile_image": "shopify://shop_images/2024-11-17_16-03-24_B_Radius8_Smoothing4.jpg",
+        "mobile_height": "screen-height-one-half--mobile",
+        "flex_align_mobile": "align--middle-center-mobile",
+        "color_scheme": "",
+        "show_text_background": false,
+        "padding_top": 0,
+        "padding_bottom": 0,
+        "show_placeholder": true
+      }
+    },
+    "subcollections": {
+      "type": "subcollections",
+      "settings": {
+        "subcollection_layout": "grid",
+        "subcollection_description": false,
+        "select_image": "collection",
+        "color_scheme": "",
+        "color": "#ffffff",
+        "bg_color": "",
+        "padding_top": 20,
+        "padding_bottom": 20
+      }
+    },
+    "main": {
+      "type": "collection",
+      "blocks": {
+        "d13a66a0-0c13-471b-999b-6ed0280b982a": {
+          "type": "featured_image",
+          "disabled": true,
+          "settings": {
+            "featured_image": "shopify://shop_images/lovelanguage.jpg",
+            "position": 1,
+            "featured_heading": "",
+            "heading_font_size": "heading-large",
+            "featured_text": "",
+            "featured_button_text": "",
+            "featured_button_link": "",
+            "button_type": "btn--primary",
+            "button_size": "btn--small",
+            "button_style": "btn--outline",
+            "show_arrow": false,
+            "featured_color_text": "#ffffff",
+            "heading_tag": "automatic"
+          }
+        }
+      },
+      "block_order": [
+        "d13a66a0-0c13-471b-999b-6ed0280b982a"
+      ],
+      "settings": {
+        "enable_sort": true,
+        "enable_filters": true,
+        "filter_layout": "inline-open",
+        "default_open": true,
+        "collection_linklist": "",
+        "grid": 4,
+        "grid_mobile": "2",
+        "products_per_page": 24,
+        "color_scheme": "",
+        "padding_top": 50,
+        "padding_bottom": 0
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "section_hero_JTnDar",
+    "subcollections",
+    "main"
+  ]
+}

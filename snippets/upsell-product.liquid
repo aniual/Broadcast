@@ -35,11 +35,14 @@
   assign show_available_upsell_only = show_available_upsell_only | default: false
 
   assign all_variants_soldout = true
-  for variant in upsell_product.variants
-    if variant.available
-      assign all_variants_soldout = false
-      break
-    endif
+
+  for option in upsell_product.options_with_values
+    for option_value in option.values
+      if option_value.available
+        assign all_variants_soldout = false
+        break
+      endif
+    endfor
   endfor
 
   if all_variants_soldout
@@ -174,6 +177,12 @@
                   </span>
                 {% endif -%}
               </p>
+
+              {%- if upsell_description != '' -%}
+                <div class="product-upsell__description{% if upsell_description_font_size != '' %} {{ upsell_description_font_size }}{% endif %}">
+                  {{ upsell_description }}
+                </div>
+              {%- endif -%}
             </a>
             {%- if all_variants_soldout -%}
               <span class="product-upsell__out-of-stock">{{ 'products.general.upsell_out_of_stock' | t }}</span>
@@ -192,12 +201,6 @@
               </button>
             {%- endif -%}
 
-            {%- if upsell_description != '' -%}
-              <div class="product-upsell__description{% if upsell_description_font_size != '' %} {{ upsell_description_font_size }}{% endif %}">
-                {{ upsell_description }}
-              </div>
-            {%- endif -%}
-
             {%- unless upsell_quick_add_hide -%}
               <div class="product-upsell__actions">
                 {%- if upsell_product.variants.size == 1 -%}
@@ -205,12 +208,14 @@
                     <input type="hidden" name="id" value="{{ upsell_variant.id }}">
 
                     {% comment %} Form ID must match value in product-form.liquid {% endcomment %}
-                    <input
-                      type="hidden"
-                      form="{{ product_form_id }}"
-                      name="properties[{{ 'general.siblings.label' | t }}]"
-                      value="{{ sibling_color }}"
-                    >
+                    {%- unless sibling_color == blank -%}
+                      <input
+                        type="hidden"
+                        form="{{ product_form_id }}"
+                        name="properties[{{ 'general.siblings.label' | t }}]"
+                        value="{{ sibling_color }}"
+                      >
+                    {%- endunless -%}
 
                     <div class="btn__outer">
                       <button

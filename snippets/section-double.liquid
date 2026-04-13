@@ -17,6 +17,7 @@
   assign animation_anchor = '#BrickSection--' | append: section.id
   assign animation_order = 0
   assign accordion_blocks = section.blocks | where: 'type', 'accordion'
+  assign collection_blocks = section.blocks | where: 'type', 'collection'
 
   assign autoplay = section.settings.autoplay
   assign autoplay_speed = false
@@ -101,6 +102,16 @@
       echo ' align--middle-center'
     endif
   endcapture
+
+  assign loading = 'lazy'
+  assign fetchpriority = 'auto'
+  assign preload = false
+
+  if section.index < 3
+    assign loading = 'eager'
+    assign fetchpriority = 'high'
+    assign preload = true
+  endif
 -%}
 
 {%- capture section_images -%}
@@ -110,7 +121,7 @@
         data-slide="1"
       {% endunless %}
     >
-      {%- render 'image-hero' image: image_1, sizes: sizes, desktop_height: desktop_height, mobile_height: mobile_height -%}
+      {%- render 'image-hero' image: image_1, sizes: sizes, desktop_height: desktop_height, mobile_height: mobile_height, loading: loading, fetchpriority: fetchpriority, preload: preload -%}
     </div>
   {%- endif -%}
 
@@ -120,7 +131,7 @@
         data-slide="2"
       {% endunless %}
     >
-      {%- render 'image-hero' image: image_2, sizes: sizes, desktop_height: desktop_height, mobile_height: mobile_height -%}
+      {%- render 'image-hero' image: image_2, sizes: sizes, desktop_height: desktop_height, mobile_height: mobile_height, loading: loading, fetchpriority: fetchpriority, preload: preload -%}
     </div>
   {%- endif -%}
 
@@ -130,6 +141,12 @@
     </div>
   {%- endif -%}
 {%- endcapture -%}
+
+{%- render 'stylesheet', name: 'custom-content.css' -%}
+
+{%- if collection_blocks.size > 0 -%}
+  {%- render 'stylesheet', name: 'collection-grid-item.css' -%}
+{%- endif -%}
 
 <section
   id="BrickSection--{{ section.id }}"
@@ -225,7 +242,7 @@
                         <span>{{ button_text }}</span>
 
                         {%- if block.settings.show_arrow -%}
-                          {%- render 'icon-arrow-right' -%}
+                          {%- render 'icon-nav-arrow-right' -%}
                         {%- endif -%}
                       </a>
                     </div>
@@ -351,7 +368,7 @@
                           <span>{{ block.settings.button_text }}</span>
 
                           {%- if block.settings.show_arrow -%}
-                            {%- render 'icon-arrow-right' -%}
+                            {%- render 'icon-nav-arrow-right' -%}
                           {%- endif -%}
                         </a>
                       </div>
@@ -453,7 +470,7 @@
                           <span>{{ block.settings.button_text }}</span>
 
                           {%- if block.settings.show_arrow -%}
-                            {%- render 'icon-arrow-right' -%}
+                            {%- render 'icon-nav-arrow-right' -%}
                           {%- endif -%}
                         </a>
                       </div>
@@ -524,8 +541,7 @@
 
                           {{ title }}
 
-                          {%- render 'icon-plus' -%}
-                          {%- render 'icon-minus' -%}
+                          {%- render 'icon-nav-arrow-down' -%}
                         </summary>
 
                         <div class="accordion__body rte" data-collapsible-body>
@@ -644,6 +660,7 @@
                       endif
                       assign style_products = columns_style | replace: item_placeholder, product_list_columns
                       assign block_style = block_style | append: style_products
+                      assign show_recently_viewed_indicator = settings.show_recently_viewed_indicator
                     -%}
 
                     <div
@@ -668,6 +685,14 @@
                         endif
                       -%}
                     </div>
+
+                    {%- if settings.quickview_enable -%}
+                      <script src="{{ 'product-info.js' | asset_url }}" defer="defer"></script>
+                    {%- endif -%}
+
+                    {%- if show_recently_viewed_indicator -%}
+                      <script src="{{ 'grid-item.js' | asset_url }}" defer></script>
+                    {%- endif -%}
 
                   {%- when 'collection' -%}
                     {%- liquid
@@ -739,7 +764,7 @@
                                     <span>{{ button_text }}</span>
 
                                     {%- if show_arrow -%}
-                                      {%- render 'icon-arrow-right' -%}
+                                      {%- render 'icon-nav-arrow-right' -%}
                                     {%- endif -%}
                                   </a>
                                 </div>

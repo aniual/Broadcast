@@ -39,6 +39,10 @@
   endif
 -%}
 
+{%- render 'stylesheet', name: 'search.css', async: true -%}
+{%- render 'stylesheet', name: 'predictive-search.css', async: true -%}
+{%- render 'stylesheet', name: 'header-search-popdown.css', async: true -%}
+
 <div class="search-popdown" aria-label="{{ 'general.search.search' | t }}" data-popdown>
   <div class="wrapper">
     <div class="search-popdown__main">

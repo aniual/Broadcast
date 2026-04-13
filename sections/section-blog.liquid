@@ -25,6 +25,9 @@
   }
 {%- endstyle -%}
 
+{%- render 'stylesheet', name: 'blog.css' -%}
+{%- render 'stylesheet', name: 'article.css' -%}
+
 <section
   id="Blog--{{ section.id }}"
   class="{{ section.settings.width }} blog-section section-padding {{ color_scheme }}"
@@ -240,7 +243,8 @@
   ],
   "presets": [
     {
-      "name": "Blog posts"
+      "name": "Blog posts",
+      "category": "Storytelling"
     }
   ],
   "disabled_on": {

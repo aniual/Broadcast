@@ -29,20 +29,23 @@
   assign height = height | default: width | divided_by: aspect_ratio
   assign sizes = sizes | default: '100vw'
   assign widths = widths | default: '180, 360, 540, 720, 900, 1080, 1296, 1512, 1728, 1950, 2100, 2260, 2450, 2700, 3000, 3350, 3750, 4100, 4450, 4800, 5150, 5500, 5760'
-  assign alt = alt | default: image.alt
+  assign default_image_label = 'general.accessibility.slide_image' | t
+  assign alt = alt | default: image.alt | default: default_image_label
   assign alt = alt | escape
-  assign attributes = attributes | default: nil
-  assign modifier = modifier | default: nil
-  assign fetchpriority = fetchpriority | default: nil
-  assign preload = preload | default: nil
+  assign attributes = attributes | default: null
+  assign modifier = modifier | default: null
+  assign fetchpriority = fetchpriority | default: null
+  assign preload = preload | default: null
   assign cover = cover | default: false
+  assign parallax = parallax | default: false
+  assign parallax_speed = parallax_speed | default: -2
   assign fill = false
 
   if aspect_ratio != image.aspect_ratio
     assign fill = true
   endif
 
-  if show_backfill == nil
+  if show_backfill == null
     assign show_backfill = true
 
     unless image
@@ -59,6 +62,17 @@
       assign loading = 'lazy'
     endif
   endunless
+
+  assign parallax_enabled = false
+  if settings.parallax_enable and parallax
+    assign parallax_enabled = true
+  endif
+
+  if parallax_enabled
+    assign wrapper_tag = 'parallax-hero'
+  else
+    assign wrapper_tag = 'figure'
+  endif
 
   capture wrapper_classes
     if modifier
@@ -87,6 +101,11 @@
     echo '--aspect-ratio: ' | append: aspect_ratio | append: ';'
     echo '"'
 
+    if parallax_enabled
+      echo ' data-parallax-wrapper'
+      echo ' data-parallax-speed="' | append: parallax_speed | append: '"'
+    endif
+
     if attributes != blank
       echo ' ' | append: attributes
     endif
@@ -105,22 +124,35 @@
   capture srcset
     render 'image-srcset', image: image, widths: widths
   endcapture
- -%}
+-%}
 
-<figure class="{{ wrapper_classes }}" {{ wrapper_attributes }}>
+<{{ wrapper_tag }} class="{{ wrapper_classes }}" {{ wrapper_attributes }}>
+  {%- if parallax_enabled -%}
+    <div class="image__hero__pane">
+      <div class="image__hero__scale image__fill" data-parallax-img>
+  {%- endif -%}
+
   {%- if image -%}
-    {{ image | image_url: width: width, height: height | image_tag:
-      loading: loading,
-      srcset: srcset,
-      sizes: sizes,
-      alt: alt,
-      fetchpriority: fetchpriority,
-      preload: preload,
-      class: img_class
+    {{
+      image
+      | image_url: width: width, height: height
+      | image_tag:
+        loading: loading,
+        srcset: srcset,
+        sizes: sizes,
+        alt: alt,
+        fetchpriority: fetchpriority,
+        preload: preload,
+        class: img_class
     }}
   {%- elsif placeholder != blank -%}
     {{ placeholder | placeholder_svg_tag: 'svg-placeholder' }}
   {%- else -%}
-    <img src="{{ 'blank.svg' | asset_url }}" loading="lazy" class="{{ img_class }}">
+    <img src="{{ 'blank.svg' | asset_url }}" loading="lazy" class="{{ img_class }}" alt="{{ alt }}">
   {%- endif -%}
-</figure>
+
+  {%- if parallax_enabled -%}
+    </div>
+    </div>
+  {%- endif -%}
+</{{ wrapper_tag }}>

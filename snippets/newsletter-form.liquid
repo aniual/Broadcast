@@ -11,6 +11,8 @@
   {% render 'newsletter-form', block: block, show_discount_message: show_discount_message success_text: success_text, small_newsletter: small_newsletter %}
 {% endcomment %}
 
+{%- render 'stylesheet', name: 'newsletter.css' -%}
+
 <script src="{{ 'newsletter.js' | asset_url }}" defer="defer"></script>
 
 {%- liquid
@@ -86,7 +88,7 @@
     <span>{{ button_text }}</span>
 
     {%- if block.settings.show_arrow or small_newsletter -%}
-      {%- render 'icon-arrow-right' -%}
+      {%- render 'icon-nav-arrow-right' -%}
     {%- endif -%}
   </button>
 {%- endcapture -%}

@@ -1,13 +1,4 @@
-{%- liquid
-  assign current_variant = product.selected_or_first_available_variant
-  assign price_font_size = block.settings.text_font_size
-  assign units = product.variants | map: 'unit_price' | compact
-  if units[0]
-    assign has_units = true
-  else
-    assign has_units = false
-  endif
--%}
+{%- assign section_id = unique | default: section.id -%}
 
 <div
   class="product__block block-padding"
@@ -19,124 +10,174 @@
   {% endif %}
 >
   <div class="product__price__wrap">
-    <div
-      class="product__price{% if has_units %} product__price--has-units{% endif %}{% if price_font_size != blank %} {{ price_font_size }}{% endif %}"
-      data-price-wrapper
-    >
-      <span
-        data-product-price
-        {% if current_variant.compare_at_price > current_variant.price %}
-          class="product__price--sale"
-        {% endif %}
-      >
-        {%- if current_variant.price == 0 -%}
-          {{ 'general.money.free' | t }}
-        {%- else -%}
-          {{ current_variant.price | money }}
-        {%- endif -%}
-      </span>
-
-      {%- if product.compare_at_price_max > product.price -%}
-        <span class="visually-hidden" data-compare-text>{{ 'products.product.regular_price' | t }}</span>
-        <s class="product__price--strike" data-compare-price>
-          {%- if current_variant.compare_at_price > current_variant.price -%}
-            {{ current_variant.compare_at_price | money }}
-          {%- endif -%}
-        </s>
-      {%- endif -%}
-
-      {%- if has_units -%}
-        {%- capture show_units -%}
-          {%- unless current_variant.unit_price -%}style="display: none;"{%- endunless -%}
-        {%- endcapture -%}
-
-        {%- capture unit_price_separator -%}
-          <span aria-hidden="true">/</span><span class="visually-hidden">{{ 'general.accessibility.unit_price_separator' | t }}&nbsp;</span>
-        {%- endcapture -%}
-
-        {%- capture unit_price_base_unit -%}
-          <span>
-            {% if current_variant.unit_price_measurement %}
-              {% if current_variant.unit_price_measurement.reference_value != 1 %}
-                {{ current_variant.unit_price_measurement.reference_value }}
-              {%- endif -%}
-              {{ current_variant.unit_price_measurement.reference_unit }}
-            {% endif %}
-          </span>
-        {%- endcapture -%}
-
-        <div class="product__price__meta">
-          <span data-product-unit {{ show_units }} class="product__price--unit">
-            <span class="visually-hidden visually-hidden--inline">{{ 'products.product.unit_price_label' | t }}</span>
-            <span data-product-unit-price id="unit-price-{{ unique }}">{{ current_variant.unit_price | money }}</span>
-            {{ unit_price_separator }}
-            <span data-product-base id="unit-price-base-{{ unique }}">{{ unit_price_base_unit }}</span>
-          </span>
-          <span data-price-each class="product__price--unit hidden">
-            {{ 'products.product.each' | t }}
-            <span data-price-each-amount></span>
-          </span>
-        </div>
-      {%- endif -%}
+    <div id="Price-{{ section_id }}" role="status" {{ block.shopify_attributes }}>
+      {%- render 'price',
+        product: product,
+        onboarding_product: onboarding_product,
+        use_variant: true,
+        show_badges: true,
+        price_font_size: block.settings.text_font_size,
+        price_class: 'price--large'
+      -%}
     </div>
 
-    {%- liquid
-      assign sale_badge = settings.sale_badge
-      assign final_sale = settings.final_sale | default: product.metafields.theme.final_sale.value
-      assign final_sale_variant = false
-
-      for variant in product.variants
-        if variant.metafields.theme.final_sale.value == true
-          assign final_sale_variant = true
+    {%- if product != blank and product.quantity_price_breaks_configured? -%}
+      {%- liquid
+        assign current_variant = product.selected_or_first_available_variant
+        assign cart_qty = cart | item_count_for_variant: current_variant.id
+        assign volume_pricing_array = current_variant.quantity_price_breaks | sort: 'quantity' | reverse
+        assign current_qty_for_volume_pricing = cart_qty | plus: current_variant.quantity_rule.min
+        if cart_qty > 0
+          assign current_qty_for_volume_pricing = cart_qty | plus: current_variant.quantity_rule.increment
         endif
-      endfor
-    -%}
+      -%}
 
-    {%- if sale_badge or final_sale or final_sale_variant -%}
-      <div
-        class="product__sale"
-        data-price-off
-        {% if final_sale %}
-          data-final-sale
-        {% endif %}
+      <price-per-item
+        id="Price-Per-Item-{{ section_id }}"
+        data-section-id="{{ section_id }}"
+        data-variant-id="{{ current_variant.id }}"
       >
-        {%- if sale_badge -%}
-          <span class="product__price--off hidden" data-price-off-badge>
-            <span data-price-off-amount></span>
-            {{ 'products.product.off' | t }}
-          </span>
-        {%- endif -%}
+        {%- if current_variant.quantity_price_breaks.size > 0 -%}
+          {%- assign variant_price_compare = current_variant.compare_at_price -%}
 
-        {%- if final_sale or final_sale_variant -%}
-          <div class="product__final-sale-wrap hidden" data-final-sale-badge>
-            <div class="product__final-sale">{{ 'products.product.final_sale' | t }}</div>
-            <tooltip-component
-              class="product__final-sale-question"
-              data-tooltip="<div style='--text: var(--COLOR-SALE);'>{{ settings.final_sale_tooltip | replace: '"', "'" }}</div>"
-            >
-              {%- render 'icon-question' -%}
-            </tooltip-component>
+          <div class="price-per-item">
+            {%- if variant_price_compare -%}
+              <dl class="price-per-item--current">
+                <dt class="visually-hidden">
+                  {{ 'products.product.price.regular_price' | t }}
+                </dt>
+                <dd>
+                  <s class="variant-item__old-price">
+                    {{ variant_price_compare | money_with_currency }}
+                  </s>
+                </dd>
+              </dl>
+            {%- endif -%}
+
+            {%- if current_qty_for_volume_pricing < volume_pricing_array.last.minimum_quantity -%}
+              {%- assign variant_price = current_variant.price | money_with_currency -%}
+              <span class="price-per-item--current">
+                {{- 'products.product.volume_pricing.price_at_each_html' | t: price: variant_price -}}
+              </span>
+            {%- else -%}
+              {%- for price_break in volume_pricing_array -%}
+                {%- if current_qty_for_volume_pricing >= price_break.minimum_quantity -%}
+                  {%- assign price_break_price = price_break.price | money_with_currency -%}
+                  <span class="price-per-item--current">
+                    {{- 'products.product.volume_pricing.price_at_each_html' | t: price: price_break_price -}}
+                  </span>
+                  {%- break -%}
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endif -%}
           </div>
+        {%- else -%}
+          {%- assign variant_price = current_variant.price | money_with_currency -%}
+          {%- assign variant_price_compare = current_variant.compare_at_price -%}
+
+          <div class="price-per-item">
+            {%- if variant_price_compare -%}
+              <dl class="price-per-item--current">
+                <dt class="visually-hidden">
+                  {{ 'products.product.price.regular_price' | t }}
+                </dt>
+                <dd>
+                  <s class="variant-item__old-price">
+                    {{ variant_price_compare | money_with_currency }}
+                  </s>
+                </dd>
+                <dt class="visually-hidden">
+                  {{ 'products.product.price.sale_price' | t }}
+                </dt>
+                <dd>
+                  <span class="price-per-item--current">
+                    {{- 'products.product.volume_pricing.price_at_each_html' | t: price: variant_price -}}
+                  </span>
+                </dd>
+              </dl>
+            {%- else -%}
+              <span class="price-per-item--current">
+                {{- 'products.product.volume_pricing.price_at_each_html' | t: price: variant_price -}}
+              </span>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </price-per-item>
+    {%- endif -%}
+
+    {%- if cart.taxes_included
+      or cart.duties_included
+      or block.settings.show_shipping_policy
+      and shop.shipping_policy.body != blank
+    -%}
+      <div class="product__tax caption rte">
+        {%- if cart.duties_included and cart.taxes_included -%}
+          {{ 'products.product.duties_and_taxes_included' | t }}
+        {%- elsif cart.taxes_included -%}
+          {{ 'products.product.taxes_included' | t }}
+        {%- elsif cart.duties_included -%}
+          {{ 'products.product.duties_included' | t }}
+        {%- endif -%}
+        {%- if block.settings.show_shipping_policy and shop.shipping_policy.body != blank -%}
+          {%- liquid
+            assign shipping_policy_text = 'products.product.shipping_policy_html' | t: link: '####' | replace: 'href="####"', 'href="#" class="text-link" data-popup-open'
+          -%}
+          <popup-component>
+            <span class="rte">
+              {{ shipping_policy_text }}
+            </span>
+
+            <dialog
+              class="drawer"
+              aria-hidden="true"
+              inert
+              data-scroll-lock-required
+            >
+              <form method="dialog">
+                <button class="visually-hidden" aria-label="{{ 'general.accessibility.close' | t }}"></button>
+              </form>
+
+              <div class="drawer__inner body-medium" data-scroll-lock-scrollable>
+                <div class="drawer__head">
+                  <h3 class="drawer__heading">{{ shop.shipping_policy.title }}</h3>
+
+                  <button
+                    type="button"
+                    class="drawer__close"
+                    data-popup-close
+                    aria-label="{{ 'general.accessibility.close' | t }}"
+                  >
+                    {%- render 'icon-cancel' -%}
+                  </button>
+                </div>
+
+                <div
+                  class="drawer__body product__popup__content rte"
+                  data-pickup-drawer-body
+                  data-scroll-lock-scrollable
+                >
+                  {{ shop.shipping_policy.body }}
+                </div>
+              </div>
+            </dialog>
+          </popup-component>
         {%- endif -%}
       </div>
     {%- endif -%}
-  </div>
 
-  {% comment %} Shop pay split payment terms {% endcomment %}
-  <div class="shop-pay-terms">
-    {%- assign product_form_installment_id = 'product-form-installment-'
-      | append: unique
-      | append: '-'
-      | append: product.id
-    -%}
-    {%- form 'product',
-      product,
-      id: product_form_installment_id,
-      class: 'installment',
-      data-product-form-installment: ''
-    -%}
-      <input type="hidden" name="id" value="{{ current_variant.id }}">
-      {{ form | payment_terms }}
-    {%- endform -%}
+    {% if product != blank %}
+      <div class="shop-pay-terms" {{ block.shopify_attributes }}>
+        {%- assign product_form_installment_id = 'product-form-installment-' | append: section_id -%}
+        {%- form 'product',
+          product,
+          id: product_form_installment_id,
+          class: 'installment',
+          data-product-form-installment: ''
+        -%}
+          <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+          {{ form | payment_terms }}
+        {%- endform -%}
+      </div>
+    {% endif %}
   </div>
 </div>

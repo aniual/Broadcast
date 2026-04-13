@@ -1,16 +1,16 @@
 {% comment %}
-    Renders "Before and after" images comparison
+  Renders "Before and after" images comparison
 
-    Accepts:
-    - image_1: {Image} Image left
-    - image_2: {Image} Image right
-    - aspect_ratio: {Number} Image aspect ratio (Optional)
-    - animation_anchor: {String} ID of the element that will trigger animations
-    - modifier: {String} Section class name
-    - wrapper: {String} Section wrapper setting
+  Accepts:
+  - image_1: {Image} Image left
+  - image_2: {Image} Image right
+  - aspect_ratio: {Number} Image aspect ratio (Optional)
+  - animation_anchor: {String} ID of the element that will trigger animations
+  - modifier: {String} Section class name
+  - wrapper: {String} Section wrapper setting
 
-    Usage:
-    {% render 'compare-images', image_1: image_1, image_2: image_2, aspect_ratio: aspect_ratio, animation_anchor: animation_anchor, modifier: modifier, wrapper: wrapper %}
+  Usage:
+  {% render 'compare-images', image_1: image_1, image_2: image_2, aspect_ratio: aspect_ratio, animation_anchor: animation_anchor, modifier: modifier, wrapper: wrapper %}
 {% endcomment %}
 
 {%- liquid
@@ -49,6 +49,8 @@
   endcapture
 -%}
 
+{%- render 'stylesheet', name: 'compare-images.css' -%}
+
 <script src="{{ 'compare-images.js' | asset_url }}" defer="defer"></script>
 
 <compare-images
@@ -57,17 +59,18 @@
   data-aos="img-in"
   data-aos-anchor="{{ animation_anchor }}"
   data-aos-duration="800"
-  data-aos-easing="ease-out-quart">
+  data-aos-easing="ease-out-quart"
+>
   <div class="compare" data-images-container>
     <div class="compare__image">
       <div class="compare__image__holder">
         {%- liquid
-            if image_1
-              render 'image', image: image_1, sizes: sizes, cover: true
-            else
-              render 'image', placeholder: 'lifestyle-1', sizes: sizes, cover: true
-            endif
-          -%}
+          if image_1
+            render 'image', image: image_1, sizes: sizes, cover: true
+          else
+            render 'image', placeholder: 'lifestyle-1', sizes: sizes, cover: true
+          endif
+        -%}
       </div>
     </div>
 
@@ -87,9 +90,7 @@
       <div class="compare__btn" data-range-button>
         {%- render 'icon-arrow-separate' -%}
       </div>
-
     </div>
     <input class="compare__input" type="range" min="0" max="100" value="50" step="1" data-range-input>
   </div>
-
 </compare-images>

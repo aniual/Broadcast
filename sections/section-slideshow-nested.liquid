@@ -8,7 +8,6 @@
   assign autoplay_speed = false
   assign show_arrows = section.settings.show_arrows
   assign slideshow_class = 'slideshow__slider'
-  assign default_slide_label = 'general.accessibility.slide_image' | t
   assign color_scheme = 'color-' | append: section.settings.color_scheme
 
   case section.settings.transition
@@ -31,6 +30,17 @@
   if settings.dots_style != 'hidden'
     assign page_dots = true
   endif
+
+  capture content_blocks
+    content_for 'blocks'
+  endcapture
+
+  comment
+    Make the first image loading attribute to eager for better LCP
+  endcomment
+  if section.index < 3
+    assign content_blocks = content_blocks | replace_first: ' loading="lazy"', ' loading="eager"' | replace_first: ' fetchpriority="auto"', ' fetchpriority="high"'
+  endif
 -%}
 
 {%- if request.visual_preview_mode -%}
@@ -46,6 +56,8 @@
   --PT: {{ section.settings.padding_top }}px;
   --PB: {{ section.settings.padding_bottom }}px;
 {%- endcapture -%}
+
+{%- render 'stylesheet', name: 'slideshow.css' -%}
 
 <div
   class="index-hero slideshow {{ desktop_height }} {{ mobile_height }} section-padding {{ color_scheme }}"
@@ -64,7 +76,7 @@
         data-options='{"fade": {{ fade_option }}, "autoPlay": {{ autoplay_speed }}, "pageDots": {{ page_dots }}, "prevNextButtons": {{ show_arrows }} }'
         data-dots="{{ settings.dots_style }}"
       >
-        {% content_for 'blocks' %}
+        {{ content_blocks }}
       </slider-component>
     {%- endif -%}
 
@@ -81,7 +93,7 @@
 {
   "name": "Slideshow (Nested)",
   "class": "section-overlay-header",
-  "blocks": [{"type": "_slide"}, {"type": "@app"}],
+  "blocks": [{"type": "_slide-image"}, {"type": "_slide-video"}, {"type": "@app"}],
   "settings": [
     {
       "type": "select",
@@ -217,12 +229,13 @@
   "presets": [
     {
       "name": "Slideshow (Nested)",
+      "category": "Banners",
       "settings": {
         "height": "screen-height-two-thirds"
       },
       "blocks": [
         {
-          "type": "_slide",
+          "type": "_slide-image",
           "blocks": [
             {
               "type": "heading"
@@ -236,7 +249,7 @@
           ]
         },
         {
-          "type": "_slide",
+          "type": "_slide-image",
           "blocks": [
             {
               "type": "heading"

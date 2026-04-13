@@ -31,6 +31,8 @@
   }
 {%- endstyle -%}
 
+{%- render 'stylesheet', name: 'highlights.css' -%}
+
 <div
   class="highlights section-padding {{ color_scheme }}"
   id="highlights--{{ unique }}"
@@ -65,6 +67,7 @@
           {%- liquid
             assign image = block.settings.image
             assign bg_color = block.settings.bg_color
+            assign text = block.settings.heading
             assign text_color = block.settings.color
             assign border_color = block.settings.border_color
 
@@ -149,6 +152,10 @@
             {%- if image or blocks_style != 'button' -%}
               <div class="highlights__item__background{% if has_border_color %} highlights__item__background--border{% endif %}">
                 {%- if image -%}
+                  {%- unless text == blank -%}
+                    <div class="image-overlay"></div>
+                  {%- endunless -%}
+
                   {%- capture sizes -%}
                       (min-width: 990px) calc((100vw - 100px) / {{ columns_desktop }}), (min-width: 750px) calc((100vw - 60px) / {{ columns_medium }}), calc(100vw - 32px)
                     {%- endcapture -%}
@@ -159,7 +166,7 @@
             {%- endif -%}
 
             <div class="highlights__item__content {{ section.settings.text_font_size }}">
-              <span>{{ block.settings.heading }}</span>
+              <span>{{ text }}</span>
             </div>
 
             {%- if link != blank -%}
@@ -357,7 +364,7 @@
           "type": "image_picker",
           "id": "image",
           "label": "Image",
-          "info": "1400 x 1400px .jpg recommended. [Learn more](https://invisiblethemes.com/link/broadcast/images)"
+          "info": "1400 x 1400px .jpg recommended. [Learn more](http://presidiodev.com/link/broadcast/images)"
         },
         {
           "type": "header",
@@ -385,17 +392,20 @@
         {
           "type": "color",
           "id": "color",
-          "label": "Text"
+          "label": "Text",
+          "alpha": true
         },
         {
           "type": "color",
           "id": "bg_color",
-          "label": "Background"
+          "label": "Background",
+          "alpha": true
         },
         {
           "type": "color",
           "id": "border_color",
-          "label": "Border"
+          "label": "Border",
+          "alpha": true
         }
       ]
     }
@@ -403,6 +413,7 @@
   "presets": [
     {
       "name": "Highlights",
+      "category": "Text",
       "blocks": [
         {
           "type": "highlight",

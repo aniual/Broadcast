@@ -4,6 +4,8 @@
   <span class="breadcrumbs__arrow">&nbsp;</span>
 {% endcapture %}
 
+{%- render 'stylesheet', name: 'breadcrumbs.css' -%}
+
 <nav class="breadcrumbs {{ breadcrumbs_modifier }}">
   <a href="{{ routes.root_url }}">{{ 'general.breadcrumbs.home' | t }}</a>
 

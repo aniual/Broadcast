@@ -1,1 +1,941 @@
-{"sections":{"section_hero_zya9xz":{"type":"section-hero","blocks":{"heading_eUJzbd":{"type":"heading","disabled":true,"settings":{"title":"Slogan","heading_font_size":"heading-x-large","heading_tag":"automatic"}},"text_9B7eqN":{"type":"text","disabled":true,"settings":{"text":"","text_font_size":"body-large"}},"button_V4dGDk":{"type":"button","disabled":true,"settings":{"link_text":"View products","link":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false}}},"block_order":["heading_eUJzbd","text_9B7eqN","button_V4dGDk"],"disabled":true,"settings":{"image_1":"shopify:\/\/shop_images\/magnolia_necklace_70ab444b-83e5-4db2-bf0c-7702b9dba0b1.webp","link":"https:\/\/agvana.com\/collections\/the-treasured-project","width":"wrapper--full","height":"screen-height-two-thirds","flex_align_desktop":"align--middle-center-desktop","content_width":50,"mobile_image":"shopify:\/\/shop_images\/MAGNOLIA_NECKLACE.webp","mobile_height":"image-height--mobile","flex_align_mobile":"align--middle-center-mobile","color_scheme":"","show_text_background":false,"overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":0,"show_placeholder":true}},"section_collection_zjUEDV":{"type":"section-collection","name":"Featured collection","settings":{"featured_collection":"the-treasured-project","heading":"Explore Treasured Collection","heading_font_size":"heading-medium","description":"","text_font_size":"body-medium","layout":"center","link_text":"","link_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"layout_desktop":"grid","grid":5,"rows":3,"width":"wrapper","layout_mobile":"slider","color_scheme":"","padding_top":50,"padding_bottom":50,"heading_tag":"automatic"}},"section_rich_text_4jWbJD":{"type":"section-rich-text","blocks":{"subheading_3wmxpC":{"type":"subheading","disabled":true,"settings":{"subheading":"","padding_bottom":16}},"heading_Hp9AAF":{"type":"heading","settings":{"title":"Ambassador with Agvana","heading_font_size":"heading-large","padding_bottom":16,"heading_tag":"automatic"}},"text_KzEcX3":{"type":"text","settings":{"text":"<p>Here, we want to provide an overview of each ambassador, including their stories, work, and the jewelry pieces you collaborated on with Agvana.<\/p>","text_font_size":"body-medium","padding_bottom":16}},"buttons_yPPkD7":{"type":"buttons","disabled":true,"settings":{"button_text":"","button_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"padding_bottom":16}}},"block_order":["subheading_3wmxpC","heading_Hp9AAF","text_KzEcX3","buttons_yPPkD7"],"name":"Rich text","settings":{"align_text":"text-center","width":"wrapper","color_scheme":"","overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":30}},"section_double_Up7KND":{"type":"section-double","blocks":{"heading_9jBGCE":{"type":"heading","disabled":true,"settings":{"title":"","heading_font_size":"heading-large","padding_bottom":16,"heading_tag":"automatic"}},"text_A4bEWf":{"type":"text","settings":{"text":"<p>Jacqueline is an author, spiritual teacher, and energy healer, known for her work helping people connect with their I AM essence. Her collaboration with Agvana, “The Magnolia & I AM” pendant, embodies healing, light, and sacred energy. The magnolia at the center of the pendant represents spiritual alignment, renewal, and the power of presence. Jacqueline’s story illustrates how jewelry can become an energetic talisman—a gentle reminder of the sacred and transformative potential within each of us. Her teachings guide individuals to tune into their own energy, release trauma, and embrace joy and alignment in everyday life.<br\/><br\/><\/p>","text_font_size":"body-medium","padding_bottom":16}}},"block_order":["heading_9jBGCE","text_A4bEWf"],"settings":{"image_1":"shopify:\/\/shop_images\/2.webp","image_width":"one-half","text_alignment":"text-left","layout":"","width":"wrapper","height":"image-height","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"color_scheme":"","padding_top":0,"padding_bottom":30,"show_placeholder":true}},"section_hero_n7N4rh":{"type":"section-hero","blocks":{"heading_FrJYnj":{"type":"heading","disabled":true,"settings":{"title":"","heading_font_size":"heading-x-large","heading_tag":"automatic"}},"text_RGAAJF":{"type":"text","disabled":true,"settings":{"text":"<p>Tell your brand's story through images.<\/p>","text_font_size":"body-large"}},"button_nGXig3":{"type":"button","disabled":true,"settings":{"link_text":"View products","link":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false}}},"block_order":["heading_FrJYnj","text_RGAAJF","button_nGXig3"],"name":"Image banner","settings":{"image_1":"shopify:\/\/shop_images\/magnolia_design_necklace_45c0bc28-3da2-4e43-8f1d-f65ef5a22374.jpg","link":"https:\/\/agvana.com\/collections\/the-treasured-project\/products\/lab-grown-diamond-magnolia-necklace","width":"wrapper--full","height":"image-height","flex_align_desktop":"align--middle-center-desktop","content_width":50,"mobile_image":"shopify:\/\/shop_images\/magnolia_necklace_design.jpg","mobile_height":"image-height--mobile","flex_align_mobile":"align--middle-center-mobile","color_scheme":"","show_text_background":false,"overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":80,"show_placeholder":true}},"section_double_gr6KQQ":{"type":"section-double","blocks":{"heading_gHA6hx":{"type":"heading","disabled":true,"settings":{"title":"","heading_font_size":"heading-large","padding_bottom":16,"heading_tag":"automatic"}},"text_dWWXTp":{"type":"text","settings":{"text":"<p>Yarona is a TEDx speaker, author, and communications coach who empowers individuals to embrace joy and connection through meaningful storytelling. Her collaboration with Agvana reflects cherished family memories, a lovely rose gold family apple tree pendant, illustrating how jewelry can carry the essence of love, warmth, and shared moments. Yarona’s work reminds us that jewelry is more than adornment—it is a vessel for emotion and memory.<br\/><br\/><\/p>","text_font_size":"body-medium","padding_bottom":16}}},"block_order":["heading_gHA6hx","text_dWWXTp"],"settings":{"image_1":"shopify:\/\/shop_images\/5.webp","image_width":"one-half","text_alignment":"text-left","layout":"is-reversed","width":"wrapper","height":"image-height","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"color_scheme":"","padding_top":0,"padding_bottom":30,"show_placeholder":true}},"section_hero_79CwMp":{"type":"section-hero","blocks":{"heading_GpFn69":{"type":"heading","disabled":true,"settings":{"title":"","heading_font_size":"heading-x-large","heading_tag":"automatic"}},"text_KGR9QV":{"type":"text","disabled":true,"settings":{"text":"<p>Tell your brand's story through images.<\/p>","text_font_size":"body-large"}},"button_848khP":{"type":"button","disabled":true,"settings":{"link_text":"View products","link":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false}}},"block_order":["heading_GpFn69","text_KGR9QV","button_848khP"],"name":"Image banner","settings":{"image_1":"shopify:\/\/shop_images\/tree_of_life_necklace.jpg","link":"https:\/\/agvana.com\/collections\/the-treasured-project\/products\/lab-grown-diamond-tree-of-life-necklace-with-ruby-in-14k-gold","width":"wrapper--full","height":"image-height","flex_align_desktop":"align--middle-center-desktop","content_width":50,"mobile_image":"shopify:\/\/shop_images\/tree_of_life_design_necklace.jpg","mobile_height":"image-height--mobile","flex_align_mobile":"align--middle-center-mobile","color_scheme":"","show_text_background":false,"overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":80,"show_placeholder":true}},"section_double_wPzqgK":{"type":"section-double","blocks":{"heading_LVYNHB":{"type":"heading","disabled":true,"settings":{"title":"The Treasured Project","heading_font_size":"heading-large","padding_bottom":16,"heading_tag":"automatic"}},"text_jedPq6":{"type":"text","settings":{"text":"<p>Dr. Sola Bio - The butterfly is a universal symbol of transformation. The butterfly is a quiet reminder that<br\/>growth often begins in those moments of stillness. Just as a caterpillar must pause in its cocoon<br\/>to undergo the delicate process of becoming, we too must honor the pauses in our lives to<br\/>transform, heal, and regain our strength.<\/p>","text_font_size":"body-medium","padding_bottom":16}},"buttons_LpXQki":{"type":"buttons","disabled":true,"settings":{"button_text":"Coming Soon","button_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"padding_bottom":16}}},"block_order":["heading_LVYNHB","text_jedPq6","buttons_LpXQki"],"settings":{"image_1":"shopify:\/\/shop_images\/8.webp","image_width":"one-half","text_alignment":"text-left","layout":"","width":"wrapper","height":"image-height","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"color_scheme":"","padding_top":0,"padding_bottom":30,"show_placeholder":true}},"section_hero_yaaXdw":{"type":"section-hero","blocks":{"heading_Fzr9By":{"type":"heading","disabled":true,"settings":{"title":"","heading_font_size":"heading-x-large","heading_tag":"automatic"}},"text_NqFRc3":{"type":"text","disabled":true,"settings":{"text":"<p>Tell your brand's story through images.<\/p>","text_font_size":"body-large"}},"button_BiVk9K":{"type":"button","disabled":true,"settings":{"link_text":"View products","link":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false}}},"block_order":["heading_Fzr9By","text_NqFRc3","button_BiVk9K"],"name":"Image banner","settings":{"image_1":"shopify:\/\/shop_images\/butterfly_bracelet.jpg","link":"https:\/\/agvana.com\/collections\/the-treasured-project\/products\/lab-grown-diamond-butterfly-bracelet","width":"wrapper--full","height":"image-height","flex_align_desktop":"align--middle-center-desktop","content_width":50,"mobile_image":"shopify:\/\/shop_images\/butterfly_bracelet_design.jpg","mobile_height":"image-height--mobile","flex_align_mobile":"align--middle-center-mobile","color_scheme":"","show_text_background":false,"overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":80,"show_placeholder":true}},"section_double_slider_kPXk6f":{"type":"section-double-slider","blocks":{"text_slide_Mit8e7":{"type":"text-slide","settings":{"subheading":"","title":"","heading_font_size":"heading-large","text":"<p>Nefeli is the Founder of Chaos to Balance Consultations and a mental health and creativity coach. She inspires people to embrace change, cultivate resilience, and develop habits that support both mental and physical well-being. For Agvana, her story emphasizes transformation and clarity, aligning beautifully with the emotional energy behind the jewelry pieces, creating meaningful connections for those who wear them.<\/p>","text_font_size":"body-medium","button_text":"","button_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"heading_tag":"automatic"}},"text_slide_YCbKpb":{"type":"text-slide","disabled":true,"settings":{"subheading":"Introducing","title":"Artistry, Precision & Craftsmanship","heading_font_size":"heading-large","text":"<p><strong>OUR VALUE<br\/><br\/><\/strong>At the heart of Agvana’s brand is an uncompromising dedication to artistry and precision. Each design is a wearable treasure, capturing the essence of emotion and storytelling through expert craftsmanship.<\/p>","text_font_size":"body-medium","button_text":"","button_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"heading_tag":"automatic"}},"text_slide_B9HMjP":{"type":"text-slide","disabled":true,"settings":{"subheading":"Introducing","title":"Emotional Healing & Connection","heading_font_size":"heading-large","text":"<p>Nefeli is the Founder of Chaos to Balance Consultations and a mental health and creativity coach. She inspires people to embrace change, cultivate resilience, and develop habits that support both mental and physical well-being. For Agvana, her story emphasizes transformation and clarity, aligning beautifully with the emotional energy behind the jewelry pieces, creating meaningful connections for those who wear them.<br\/><br\/><\/p>","text_font_size":"body-medium","button_text":"","button_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"heading_tag":"automatic"}}},"block_order":["text_slide_Mit8e7","text_slide_YCbKpb","text_slide_B9HMjP"],"settings":{"image_1":"shopify:\/\/shop_images\/11.webp","image_width":"one-half","autoplay":true,"autoplay_speed":4,"text_alignment":"text-left","layout":"is-reversed","width":"wrapper","height":"image-height","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"color_scheme":"","padding_top":0,"padding_bottom":30,"show_placeholder":true}},"section_hero_xiq637":{"type":"section-hero","blocks":{"heading_e9MtyC":{"type":"heading","disabled":true,"settings":{"title":"","heading_font_size":"heading-x-large","heading_tag":"automatic"}},"text_KCFnU8":{"type":"text","disabled":true,"settings":{"text":"<p>Tell your brand's story through images.<\/p>","text_font_size":"body-large"}},"button_7fHEdy":{"type":"button","disabled":true,"settings":{"link_text":"View products","link":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false}}},"block_order":["heading_e9MtyC","text_KCFnU8","button_7fHEdy"],"name":"Image banner","settings":{"image_1":"shopify:\/\/shop_images\/yinyang_necklace.jpg","link":"https:\/\/agvana.com\/collections\/the-treasured-project\/products\/lab-grown-diamond-yin-yang-necklace-in-14k-gold","width":"wrapper--full","height":"image-height","flex_align_desktop":"align--middle-center-desktop","content_width":50,"mobile_image":"shopify:\/\/shop_images\/yinyang_design_necklace.jpg","mobile_height":"image-height--mobile","flex_align_mobile":"align--middle-center-mobile","color_scheme":"","show_text_background":false,"overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":80,"show_placeholder":true}},"main":{"type":"main-page","disabled":true,"settings":{"subheading":"","show_title":true,"heading_font_size":"heading-large","show_content":true,"text_font_size":"body-medium","align_text":"text-left","width":"wrapper","color_scheme":"","padding_top":50,"padding_bottom":50,"heading_tag":"automatic"}},"7494a423-ad40-497d-8fb4-b099c576afcb":{"type":"section-double","blocks":{"template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-heading-1":{"type":"heading","settings":{"title":"Agvana Influencers","heading_font_size":"heading-large","padding_bottom":16,"heading_tag":"automatic"}},"template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-text-1":{"type":"text","settings":{"text":"<p>At Agvan, our creators are cherished members of our family. We're committed to producing exceptional jewelry, fostering collaboration, and valuing great communication. Drawing inspiration from the timeless beauty of the rose, our pieces exude romance, courage, and passion, offering the perfect gift for every momentous occasion.<br\/><\/p>","text_font_size":"body-medium","padding_bottom":16}},"buttons_H38P4X":{"type":"buttons","disabled":true,"settings":{"button_text":"Join Us Now","button_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"padding_bottom":16}}},"block_order":["template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-heading-1","template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-text-1","buttons_H38P4X"],"disabled":true,"settings":{"image_1":"shopify:\/\/shop_images\/Tezza-6400.jpg","image_width":"one-half","text_alignment":"text-center","layout":"is-reversed","width":"wrapper--full","height":"screen-height-one-half","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"color_scheme":"","padding_top":0,"padding_bottom":0,"show_placeholder":true}},"6013f96c-fc36-43ea-b3df-de7da7c90246":{"type":"section-double","blocks":{"template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-heading-1":{"type":"heading","disabled":true,"settings":{"title":"Sparkle Every Occassion","heading_font_size":"heading-large","padding_bottom":16,"heading_tag":"automatic"}},"template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-text-1":{"type":"text","settings":{"text":"<p>At Agvana, we forge connections. 💎<br\/>Dive into our world where every piece tells a story, linking journeys and touching hearts. <\/p><p>Drawing inspiration from the timeless beauty diamond, our pieces exude romance, courage, and passion, offering the perfect gift for every momentous occasion.<\/p><p><\/p>","text_font_size":"body-medium","padding_bottom":16}},"5af40236-3706-47cb-aaa4-192a8e1d6908":{"type":"buttons","settings":{"button_text":"Shop Best Sellers","button_url":"shopify:\/\/collections\/best-sellers","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"padding_bottom":16}}},"block_order":["template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-heading-1","template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-text-1","5af40236-3706-47cb-aaa4-192a8e1d6908"],"disabled":true,"settings":{"image_2":"shopify:\/\/shop_images\/PI9A5187.png","image_width":"one-half","text_alignment":"text-center","layout":"","width":"wrapper--full","height":"screen-height-one-half","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"color_scheme":"","padding_top":0,"padding_bottom":0,"show_placeholder":true}},"section_double_Amgbca":{"type":"section-double","blocks":{"heading_AqMpqK":{"type":"heading","disabled":true,"settings":{"title":"Brand Sustainability","heading_font_size":"heading-large","padding_bottom":16,"heading_tag":"automatic"}},"text_Nw69hR":{"type":"text","settings":{"text":"<p>Patricia is the Founder of Keep It Simple Now, a professional coach, author, and speaker. In her collaboration with Agvana, she created her“Infinite Bond” ring, which celebrates simplicity, devotion, and the enduring love shared between mother and daughter. Patricia’s story illustrates how jewelry can serve as a tangible reminder of commitment, love, and emotional support, honoring moments of connection that shape our lives.<\/p>","text_font_size":"body-medium","padding_bottom":0}},"buttons_DqByqc":{"type":"buttons","disabled":true,"settings":{"button_text":"Learn more","button_url":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false,"padding_bottom":16}}},"block_order":["heading_AqMpqK","text_Nw69hR","buttons_DqByqc"],"settings":{"image_1":"shopify:\/\/shop_images\/14.webp","image_width":"one-half","text_alignment":"text-left","layout":"","width":"wrapper","height":"image-height","mobile_height":"screen-height-one-half--mobile","reverse_blocks":false,"color_scheme":"","padding_top":0,"padding_bottom":30,"show_placeholder":true}},"section_hero_dT8LhN":{"type":"section-hero","blocks":{"heading_ew7KfT":{"type":"heading","disabled":true,"settings":{"title":"","heading_font_size":"heading-x-large","heading_tag":"automatic"}},"text_MWLM6K":{"type":"text","disabled":true,"settings":{"text":"<p>Tell your brand's story through images.<\/p>","text_font_size":"body-large"}},"button_hecPck":{"type":"button","disabled":true,"settings":{"link_text":"View products","link":"","button_type":"btn--primary","button_size":"","button_style":"btn--solid","show_arrow":false}}},"block_order":["heading_ew7KfT","text_MWLM6K","button_hecPck"],"name":"Image banner","settings":{"image_1":"shopify:\/\/shop_images\/infinite_ring.jpg","link":"https:\/\/agvana.com\/collections\/the-treasured-project\/products\/lab-grown-diamond-infinity-heart-wedding-band","width":"wrapper--full","height":"image-height","flex_align_desktop":"align--middle-center-desktop","content_width":50,"mobile_image":"shopify:\/\/shop_images\/infinite_ring_design.jpg","mobile_height":"image-height--mobile","flex_align_mobile":"align--middle-center-mobile","color_scheme":"","show_text_background":false,"overlay_opacity":0,"show_overlay_text":false,"padding_top":0,"padding_bottom":50,"show_placeholder":true}},"section_text_row_mqqGGX":{"type":"section-text-row","blocks":{"icon_VYUzyt":{"type":"icon","settings":{"icon_name":"icon-chat","icon_size":50,"icon_color":"","title":"7\/24 Customer Service","heading_font_size":"heading-small","text":"","text_font_size":"body-medium","heading_tag":"automatic"}},"icon_iz7PR3":{"type":"icon","settings":{"icon_name":"icon-shield","icon_size":50,"icon_color":"","title":"Six-Month Warranty","heading_font_size":"heading-small","text":"","text_font_size":"body-medium","heading_tag":"automatic"}},"icon_Uew8B3":{"type":"icon","settings":{"icon_name":"icon-fast-shipment","icon_size":50,"icon_color":"","title":"Free Returns","heading_font_size":"heading-small","text":"","text_font_size":"body-medium","heading_tag":"automatic"}},"icon_nRmB4k":{"type":"icon","settings":{"icon_name":"icon-flare","icon_size":50,"icon_color":"","title":"Bespoke Design","heading_font_size":"heading-small","text":"","text_font_size":"body-medium","heading_tag":"automatic"}}},"block_order":["icon_VYUzyt","icon_iz7PR3","icon_Uew8B3","icon_nRmB4k"],"name":"Text columns with icons","settings":{"title":"","heading_font_size":"heading-medium","align_heading":"text-left","align_text":"text-center","icon_alignment":"icon--top","width":"wrapper--full-padded","align_columns":"flex-align-top","layout":"grid","grid":4,"layout_mobile":"2","color_scheme":"scheme-4cbdac56-2c2c-4226-aab4-d5ba3830d95c","padding_top":50,"padding_bottom":50,"heading_tag":"automatic"}},"section_divider_jByDzy":{"type":"section-divider","settings":{"show_line":true,"width":"wrapper--full","color_scheme":"scheme-1","padding_top":16,"padding_bottom":16}}},"order":["section_hero_zya9xz","section_collection_zjUEDV","section_rich_text_4jWbJD","section_double_Up7KND","section_hero_n7N4rh","section_double_gr6KQQ","section_hero_79CwMp","section_double_wPzqgK","section_hero_yaaXdw","section_double_slider_kPXk6f","section_hero_xiq637","main","7494a423-ad40-497d-8fb4-b099c576afcb","6013f96c-fc36-43ea-b3df-de7da7c90246","section_double_Amgbca","section_hero_dT8LhN","section_text_row_mqqGGX","section_divider_jByDzy"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "section_hero_zya9xz": {
+      "type": "section-hero",
+      "blocks": {
+        "heading_eUJzbd": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "Slogan",
+            "heading_font_size": "heading-x-large",
+            "heading_tag": "automatic"
+          }
+        },
+        "text_9B7eqN": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "",
+            "text_font_size": "body-large"
+          }
+        },
+        "button_V4dGDk": {
+          "type": "button",
+          "disabled": true,
+          "settings": {
+            "link_text": "View products",
+            "link": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_eUJzbd",
+        "text_9B7eqN",
+        "button_V4dGDk"
+      ],
+      "disabled": true,
+      "settings": {
+        "image_1": "shopify://shop_images/magnolia_necklace_70ab444b-83e5-4db2-bf0c-7702b9dba0b1.webp",
+        "link": "https://agvana.com/collections/the-treasured-project",
+        "width": "wrapper--full",
+        "height": "screen-height-two-thirds",
+        "flex_align_desktop": "align--middle-center-desktop",
+        "content_width": 50,
+        "mobile_image": "shopify://shop_images/MAGNOLIA_NECKLACE.webp",
+        "mobile_height": "image-height--mobile",
+        "flex_align_mobile": "align--middle-center-mobile",
+        "color_scheme": "",
+        "show_text_background": false,
+        "padding_top": 0,
+        "padding_bottom": 0,
+        "show_placeholder": true
+      }
+    },
+    "section_collection_zjUEDV": {
+      "type": "section-collection",
+      "name": "Featured collection",
+      "settings": {
+        "featured_collection": "the-treasured-project",
+        "heading": "Explore Treasured Collection",
+        "heading_font_size": "heading-medium",
+        "description": "",
+        "text_font_size": "body-medium",
+        "layout": "center",
+        "link_text": "",
+        "link_url": "",
+        "button_type": "btn--primary",
+        "button_size": "",
+        "button_style": "btn--solid",
+        "show_arrow": false,
+        "layout_desktop": "grid",
+        "grid": 5,
+        "rows": 3,
+        "width": "wrapper",
+        "layout_mobile": "slider",
+        "color_scheme": "",
+        "padding_top": 50,
+        "padding_bottom": 50,
+        "heading_tag": "automatic"
+      }
+    },
+    "section_rich_text_4jWbJD": {
+      "type": "section-rich-text",
+      "blocks": {
+        "subheading_3wmxpC": {
+          "type": "subheading",
+          "disabled": true,
+          "settings": {
+            "subheading": "",
+            "padding_bottom": 16
+          }
+        },
+        "heading_Hp9AAF": {
+          "type": "heading",
+          "settings": {
+            "title": "Ambassador with Agvana",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_KzEcX3": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Here, we want to provide an overview of each ambassador, including their stories, work, and the jewelry pieces you collaborated on with Agvana.</p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 16
+          }
+        },
+        "buttons_yPPkD7": {
+          "type": "buttons",
+          "disabled": true,
+          "settings": {
+            "button_text": "",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "subheading_3wmxpC",
+        "heading_Hp9AAF",
+        "text_KzEcX3",
+        "buttons_yPPkD7"
+      ],
+      "name": "Rich text",
+      "settings": {
+        "align_text": "text-center",
+        "width": "wrapper",
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 30
+      }
+    },
+    "section_double_Up7KND": {
+      "type": "section-double",
+      "blocks": {
+        "heading_9jBGCE": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_A4bEWf": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Jacqueline is an author, spiritual teacher, and energy healer, known for her work helping people connect with their I AM essence. Her collaboration with Agvana, “The Magnolia & I AM” pendant, embodies healing, light, and sacred energy. The magnolia at the center of the pendant represents spiritual alignment, renewal, and the power of presence. Jacqueline’s story illustrates how jewelry can become an energetic talisman—a gentle reminder of the sacred and transformative potential within each of us. Her teachings guide individuals to tune into their own energy, release trauma, and embrace joy and alignment in everyday life.<br/><br/></p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "heading_9jBGCE",
+        "text_A4bEWf"
+      ],
+      "settings": {
+        "image_1": "shopify://shop_images/2.webp",
+        "image_width": "one-half",
+        "text_alignment": "text-left",
+        "layout": "",
+        "width": "wrapper",
+        "height": "image-height",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 30,
+        "show_placeholder": true
+      }
+    },
+    "section_hero_n7N4rh": {
+      "type": "section-hero",
+      "blocks": {
+        "heading_FrJYnj": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "",
+            "heading_font_size": "heading-x-large",
+            "heading_tag": "automatic"
+          }
+        },
+        "text_RGAAJF": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p>Tell your brand's story through images.</p>",
+            "text_font_size": "body-large"
+          }
+        },
+        "button_nGXig3": {
+          "type": "button",
+          "disabled": true,
+          "settings": {
+            "link_text": "View products",
+            "link": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_FrJYnj",
+        "text_RGAAJF",
+        "button_nGXig3"
+      ],
+      "name": "Image banner",
+      "settings": {
+        "image_1": "shopify://shop_images/magnolia_design_necklace_45c0bc28-3da2-4e43-8f1d-f65ef5a22374.jpg",
+        "link": "https://agvana.com/collections/the-treasured-project/products/lab-grown-diamond-magnolia-necklace",
+        "width": "wrapper--full",
+        "height": "image-height",
+        "flex_align_desktop": "align--middle-center-desktop",
+        "content_width": 50,
+        "mobile_image": "shopify://shop_images/magnolia_necklace_design.jpg",
+        "mobile_height": "image-height--mobile",
+        "flex_align_mobile": "align--middle-center-mobile",
+        "color_scheme": "",
+        "show_text_background": false,
+        "padding_top": 0,
+        "padding_bottom": 80,
+        "show_placeholder": true
+      }
+    },
+    "section_double_gr6KQQ": {
+      "type": "section-double",
+      "blocks": {
+        "heading_gHA6hx": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_dWWXTp": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Yarona is a TEDx speaker, author, and communications coach who empowers individuals to embrace joy and connection through meaningful storytelling. Her collaboration with Agvana reflects cherished family memories, a lovely rose gold family apple tree pendant, illustrating how jewelry can carry the essence of love, warmth, and shared moments. Yarona’s work reminds us that jewelry is more than adornment—it is a vessel for emotion and memory.<br/><br/></p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "heading_gHA6hx",
+        "text_dWWXTp"
+      ],
+      "settings": {
+        "image_1": "shopify://shop_images/5.webp",
+        "image_width": "one-half",
+        "text_alignment": "text-left",
+        "layout": "is-reversed",
+        "width": "wrapper",
+        "height": "image-height",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 30,
+        "show_placeholder": true
+      }
+    },
+    "section_hero_79CwMp": {
+      "type": "section-hero",
+      "blocks": {
+        "heading_GpFn69": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "",
+            "heading_font_size": "heading-x-large",
+            "heading_tag": "automatic"
+          }
+        },
+        "text_KGR9QV": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p>Tell your brand's story through images.</p>",
+            "text_font_size": "body-large"
+          }
+        },
+        "button_848khP": {
+          "type": "button",
+          "disabled": true,
+          "settings": {
+            "link_text": "View products",
+            "link": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_GpFn69",
+        "text_KGR9QV",
+        "button_848khP"
+      ],
+      "name": "Image banner",
+      "settings": {
+        "image_1": "shopify://shop_images/tree_of_life_necklace.jpg",
+        "link": "https://agvana.com/collections/the-treasured-project/products/lab-grown-diamond-tree-of-life-necklace-with-ruby-in-14k-gold",
+        "width": "wrapper--full",
+        "height": "image-height",
+        "flex_align_desktop": "align--middle-center-desktop",
+        "content_width": 50,
+        "mobile_image": "shopify://shop_images/tree_of_life_design_necklace.jpg",
+        "mobile_height": "image-height--mobile",
+        "flex_align_mobile": "align--middle-center-mobile",
+        "color_scheme": "",
+        "show_text_background": false,
+        "padding_top": 0,
+        "padding_bottom": 80,
+        "show_placeholder": true
+      }
+    },
+    "section_double_wPzqgK": {
+      "type": "section-double",
+      "blocks": {
+        "heading_LVYNHB": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "The Treasured Project",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_jedPq6": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Dr. Sola Bio - The butterfly is a universal symbol of transformation. The butterfly is a quiet reminder that<br/>growth often begins in those moments of stillness. Just as a caterpillar must pause in its cocoon<br/>to undergo the delicate process of becoming, we too must honor the pauses in our lives to<br/>transform, heal, and regain our strength.</p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 16
+          }
+        },
+        "buttons_LpXQki": {
+          "type": "buttons",
+          "disabled": true,
+          "settings": {
+            "button_text": "Coming Soon",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "heading_LVYNHB",
+        "text_jedPq6",
+        "buttons_LpXQki"
+      ],
+      "settings": {
+        "image_1": "shopify://shop_images/8.webp",
+        "image_width": "one-half",
+        "text_alignment": "text-left",
+        "layout": "",
+        "width": "wrapper",
+        "height": "image-height",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 30,
+        "show_placeholder": true
+      }
+    },
+    "section_hero_yaaXdw": {
+      "type": "section-hero",
+      "blocks": {
+        "heading_Fzr9By": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "",
+            "heading_font_size": "heading-x-large",
+            "heading_tag": "automatic"
+          }
+        },
+        "text_NqFRc3": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p>Tell your brand's story through images.</p>",
+            "text_font_size": "body-large"
+          }
+        },
+        "button_BiVk9K": {
+          "type": "button",
+          "disabled": true,
+          "settings": {
+            "link_text": "View products",
+            "link": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_Fzr9By",
+        "text_NqFRc3",
+        "button_BiVk9K"
+      ],
+      "name": "Image banner",
+      "settings": {
+        "image_1": "shopify://shop_images/butterfly_bracelet.jpg",
+        "link": "https://agvana.com/collections/the-treasured-project/products/lab-grown-diamond-butterfly-bracelet",
+        "width": "wrapper--full",
+        "height": "image-height",
+        "flex_align_desktop": "align--middle-center-desktop",
+        "content_width": 50,
+        "mobile_image": "shopify://shop_images/butterfly_bracelet_design.jpg",
+        "mobile_height": "image-height--mobile",
+        "flex_align_mobile": "align--middle-center-mobile",
+        "color_scheme": "",
+        "show_text_background": false,
+        "padding_top": 0,
+        "padding_bottom": 80,
+        "show_placeholder": true
+      }
+    },
+    "section_double_slider_kPXk6f": {
+      "type": "section-double-slider",
+      "blocks": {
+        "text_slide_Mit8e7": {
+          "type": "text-slide",
+          "settings": {
+            "subheading": "",
+            "title": "",
+            "heading_font_size": "heading-large",
+            "text": "<p>Nefeli is the Founder of Chaos to Balance Consultations and a mental health and creativity coach. She inspires people to embrace change, cultivate resilience, and develop habits that support both mental and physical well-being. For Agvana, her story emphasizes transformation and clarity, aligning beautifully with the emotional energy behind the jewelry pieces, creating meaningful connections for those who wear them.</p>",
+            "text_font_size": "body-medium",
+            "button_text": "",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_slide_YCbKpb": {
+          "type": "text-slide",
+          "disabled": true,
+          "settings": {
+            "subheading": "Introducing",
+            "title": "Artistry, Precision & Craftsmanship",
+            "heading_font_size": "heading-large",
+            "text": "<p><strong>OUR VALUE<br/><br/></strong>At the heart of Agvana’s brand is an uncompromising dedication to artistry and precision. Each design is a wearable treasure, capturing the essence of emotion and storytelling through expert craftsmanship.</p>",
+            "text_font_size": "body-medium",
+            "button_text": "",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_slide_B9HMjP": {
+          "type": "text-slide",
+          "disabled": true,
+          "settings": {
+            "subheading": "Introducing",
+            "title": "Emotional Healing & Connection",
+            "heading_font_size": "heading-large",
+            "text": "<p>Nefeli is the Founder of Chaos to Balance Consultations and a mental health and creativity coach. She inspires people to embrace change, cultivate resilience, and develop habits that support both mental and physical well-being. For Agvana, her story emphasizes transformation and clarity, aligning beautifully with the emotional energy behind the jewelry pieces, creating meaningful connections for those who wear them.<br/><br/></p>",
+            "text_font_size": "body-medium",
+            "button_text": "",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "heading_tag": "automatic"
+          }
+        }
+      },
+      "block_order": [
+        "text_slide_Mit8e7",
+        "text_slide_YCbKpb",
+        "text_slide_B9HMjP"
+      ],
+      "settings": {
+        "image_1": "shopify://shop_images/11.webp",
+        "image_width": "one-half",
+        "autoplay": true,
+        "autoplay_speed": 4,
+        "text_alignment": "text-left",
+        "layout": "is-reversed",
+        "width": "wrapper",
+        "height": "image-height",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 30,
+        "show_placeholder": true
+      }
+    },
+    "section_hero_xiq637": {
+      "type": "section-hero",
+      "blocks": {
+        "heading_e9MtyC": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "",
+            "heading_font_size": "heading-x-large",
+            "heading_tag": "automatic"
+          }
+        },
+        "text_KCFnU8": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p>Tell your brand's story through images.</p>",
+            "text_font_size": "body-large"
+          }
+        },
+        "button_7fHEdy": {
+          "type": "button",
+          "disabled": true,
+          "settings": {
+            "link_text": "View products",
+            "link": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_e9MtyC",
+        "text_KCFnU8",
+        "button_7fHEdy"
+      ],
+      "name": "Image banner",
+      "settings": {
+        "image_1": "shopify://shop_images/yinyang_necklace.jpg",
+        "link": "https://agvana.com/collections/the-treasured-project/products/lab-grown-diamond-yin-yang-necklace-in-14k-gold",
+        "width": "wrapper--full",
+        "height": "image-height",
+        "flex_align_desktop": "align--middle-center-desktop",
+        "content_width": 50,
+        "mobile_image": "shopify://shop_images/yinyang_design_necklace.jpg",
+        "mobile_height": "image-height--mobile",
+        "flex_align_mobile": "align--middle-center-mobile",
+        "color_scheme": "",
+        "show_text_background": false,
+        "padding_top": 0,
+        "padding_bottom": 80,
+        "show_placeholder": true
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "subheading": "",
+        "show_title": true,
+        "heading_font_size": "heading-large",
+        "show_content": true,
+        "text_font_size": "body-medium",
+        "align_text": "text-left",
+        "width": "wrapper",
+        "color_scheme": "",
+        "padding_top": 50,
+        "padding_bottom": 50,
+        "heading_tag": "automatic"
+      }
+    },
+    "7494a423-ad40-497d-8fb4-b099c576afcb": {
+      "type": "section-double",
+      "blocks": {
+        "template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-heading-1": {
+          "type": "heading",
+          "settings": {
+            "title": "Agvana Influencers",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-text-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>At Agvan, our creators are cherished members of our family. We're committed to producing exceptional jewelry, fostering collaboration, and valuing great communication. Drawing inspiration from the timeless beauty of the rose, our pieces exude romance, courage, and passion, offering the perfect gift for every momentous occasion.<br/></p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 16
+          }
+        },
+        "buttons_H38P4X": {
+          "type": "buttons",
+          "disabled": true,
+          "settings": {
+            "button_text": "Join Us Now",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-heading-1",
+        "template--16080811917472__7494a423-ad40-497d-8fb4-b099c576afcb-text-1",
+        "buttons_H38P4X"
+      ],
+      "disabled": true,
+      "settings": {
+        "image_1": "shopify://shop_images/Tezza-6400.jpg",
+        "image_width": "one-half",
+        "text_alignment": "text-center",
+        "layout": "is-reversed",
+        "width": "wrapper--full",
+        "height": "screen-height-one-half",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 0,
+        "show_placeholder": true
+      }
+    },
+    "6013f96c-fc36-43ea-b3df-de7da7c90246": {
+      "type": "section-double",
+      "blocks": {
+        "template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-heading-1": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "Sparkle Every Occassion",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-text-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>At Agvana, we forge connections. 💎<br/>Dive into our world where every piece tells a story, linking journeys and touching hearts. </p><p>Drawing inspiration from the timeless beauty diamond, our pieces exude romance, courage, and passion, offering the perfect gift for every momentous occasion.</p><p></p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 16
+          }
+        },
+        "5af40236-3706-47cb-aaa4-192a8e1d6908": {
+          "type": "buttons",
+          "settings": {
+            "button_text": "Shop Best Sellers",
+            "button_url": "shopify://collections/best-sellers",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-heading-1",
+        "template--16080811917472__6013f96c-fc36-43ea-b3df-de7da7c90246-text-1",
+        "5af40236-3706-47cb-aaa4-192a8e1d6908"
+      ],
+      "disabled": true,
+      "settings": {
+        "image_2": "shopify://shop_images/PI9A5187.png",
+        "image_width": "one-half",
+        "text_alignment": "text-center",
+        "layout": "",
+        "width": "wrapper--full",
+        "height": "screen-height-one-half",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 0,
+        "show_placeholder": true
+      }
+    },
+    "section_double_Amgbca": {
+      "type": "section-double",
+      "blocks": {
+        "heading_AqMpqK": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "Brand Sustainability",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_Nw69hR": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Patricia is the Founder of Keep It Simple Now, a professional coach, author, and speaker. In her collaboration with Agvana, she created her“Infinite Bond” ring, which celebrates simplicity, devotion, and the enduring love shared between mother and daughter. Patricia’s story illustrates how jewelry can serve as a tangible reminder of commitment, love, and emotional support, honoring moments of connection that shape our lives.</p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 0
+          }
+        },
+        "buttons_DqByqc": {
+          "type": "buttons",
+          "disabled": true,
+          "settings": {
+            "button_text": "Learn more",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "heading_AqMpqK",
+        "text_Nw69hR",
+        "buttons_DqByqc"
+      ],
+      "settings": {
+        "image_1": "shopify://shop_images/14.webp",
+        "image_width": "one-half",
+        "text_alignment": "text-left",
+        "layout": "",
+        "width": "wrapper",
+        "height": "image-height",
+        "mobile_height": "screen-height-one-half--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 30,
+        "show_placeholder": true
+      }
+    },
+    "section_hero_dT8LhN": {
+      "type": "section-hero",
+      "blocks": {
+        "heading_ew7KfT": {
+          "type": "heading",
+          "disabled": true,
+          "settings": {
+            "title": "",
+            "heading_font_size": "heading-x-large",
+            "heading_tag": "automatic"
+          }
+        },
+        "text_MWLM6K": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p>Tell your brand's story through images.</p>",
+            "text_font_size": "body-large"
+          }
+        },
+        "button_hecPck": {
+          "type": "button",
+          "disabled": true,
+          "settings": {
+            "link_text": "View products",
+            "link": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_ew7KfT",
+        "text_MWLM6K",
+        "button_hecPck"
+      ],
+      "name": "Image banner",
+      "settings": {
+        "image_1": "shopify://shop_images/infinite_ring.jpg",
+        "link": "https://agvana.com/collections/the-treasured-project/products/lab-grown-diamond-infinity-heart-wedding-band",
+        "width": "wrapper--full",
+        "height": "image-height",
+        "flex_align_desktop": "align--middle-center-desktop",
+        "content_width": 50,
+        "mobile_image": "shopify://shop_images/infinite_ring_design.jpg",
+        "mobile_height": "image-height--mobile",
+        "flex_align_mobile": "align--middle-center-mobile",
+        "color_scheme": "",
+        "show_text_background": false,
+        "padding_top": 0,
+        "padding_bottom": 50,
+        "show_placeholder": true
+      }
+    },
+    "section_text_row_mqqGGX": {
+      "type": "section-text-row",
+      "blocks": {
+        "icon_VYUzyt": {
+          "type": "icon",
+          "settings": {
+            "icon_name": "icon-chat",
+            "icon_size": 50,
+            "icon_color": "",
+            "title": "7/24 Customer Service",
+            "heading_font_size": "heading-small",
+            "text": "",
+            "text_font_size": "body-medium",
+            "heading_tag": "automatic"
+          }
+        },
+        "icon_iz7PR3": {
+          "type": "icon",
+          "settings": {
+            "icon_name": "icon-shield",
+            "icon_size": 50,
+            "icon_color": "",
+            "title": "Six-Month Warranty",
+            "heading_font_size": "heading-small",
+            "text": "",
+            "text_font_size": "body-medium",
+            "heading_tag": "automatic"
+          }
+        },
+        "icon_Uew8B3": {
+          "type": "icon",
+          "settings": {
+            "icon_name": "icon-fast-shipment",
+            "icon_size": 50,
+            "icon_color": "",
+            "title": "Free Returns",
+            "heading_font_size": "heading-small",
+            "text": "",
+            "text_font_size": "body-medium",
+            "heading_tag": "automatic"
+          }
+        },
+        "icon_nRmB4k": {
+          "type": "icon",
+          "settings": {
+            "icon_name": "icon-flare",
+            "icon_size": 50,
+            "icon_color": "",
+            "title": "Bespoke Design",
+            "heading_font_size": "heading-small",
+            "text": "",
+            "text_font_size": "body-medium",
+            "heading_tag": "automatic"
+          }
+        }
+      },
+      "block_order": [
+        "icon_VYUzyt",
+        "icon_iz7PR3",
+        "icon_Uew8B3",
+        "icon_nRmB4k"
+      ],
+      "name": "Text columns with icons",
+      "settings": {
+        "title": "",
+        "heading_font_size": "heading-medium",
+        "align_heading": "text-left",
+        "align_text": "text-center",
+        "icon_alignment": "icon--top",
+        "width": "wrapper--full-padded",
+        "align_columns": "flex-align-top",
+        "layout": "grid",
+        "grid": 4,
+        "layout_mobile": "2",
+        "color_scheme": "scheme-4cbdac56-2c2c-4226-aab4-d5ba3830d95c",
+        "padding_top": 50,
+        "padding_bottom": 50,
+        "heading_tag": "automatic"
+      }
+    },
+    "section_divider_jByDzy": {
+      "type": "section-divider",
+      "settings": {
+        "show_line": true,
+        "width": "wrapper--full",
+        "color_scheme": "scheme-1",
+        "padding_top": 16,
+        "padding_bottom": 16
+      }
+    }
+  },
+  "order": [
+    "section_hero_zya9xz",
+    "section_collection_zjUEDV",
+    "section_rich_text_4jWbJD",
+    "section_double_Up7KND",
+    "section_hero_n7N4rh",
+    "section_double_gr6KQQ",
+    "section_hero_79CwMp",
+    "section_double_wPzqgK",
+    "section_hero_yaaXdw",
+    "section_double_slider_kPXk6f",
+    "section_hero_xiq637",
+    "main",
+    "7494a423-ad40-497d-8fb4-b099c576afcb",
+    "6013f96c-fc36-43ea-b3df-de7da7c90246",
+    "section_double_Amgbca",
+    "section_hero_dT8LhN",
+    "section_text_row_mqqGGX",
+    "section_divider_jByDzy"
+  ]
+}
