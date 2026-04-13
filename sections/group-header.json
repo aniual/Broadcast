@@ -17,9 +17,9 @@
         "text_PwfBX8": {
           "type": "text",
           "settings": {
-            "text": "<p>15% Off for Sitewide with WELCOME15 and Free Shipping. Shop Now!</p>",
+            "text": "<p><strong>Mother’s Day Sale</strong>: 20% Off Sitewide with Code <strong>MOM20</strong>. Shop Now!</p>",
             "target_url_enabled": false,
-            "target_url": "",
+            "target_url": "shopify://collections/gifts-for-mother-s-day",
             "target_referrer_enabled": false,
             "target_referrer": "",
             "target_device_enabled": false,
