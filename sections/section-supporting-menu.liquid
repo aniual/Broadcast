@@ -4,7 +4,6 @@
   assign languages = false
   assign countries = false
   assign show_locale_selector = section.settings.show_locale_selector
-  assign show_locale_code = section.settings.show_locale_code
   assign show_globe_icon = section.settings.show_globe_icon
   assign show_country_selector = section.settings.show_country_selector
   assign show_country_name = section.settings.show_country_name
@@ -37,8 +36,6 @@
   }
 {%- endstyle -%}
 
-{%- render 'stylesheet', name: 'supporting-menu.css' -%}
-
 <section
   id="SupportingMenu--{{ section.id }}"
   class="supporting-menu section-padding {{ color_scheme }}"
@@ -51,7 +48,6 @@
         {%- render 'localization',
           unique: section.id,
           show_locale_selector: show_locale_selector,
-          show_locale_code: show_locale_code,
           show_globe_icon: show_globe_icon,
           show_country_selector: show_country_selector,
           show_country_flag: show_country_flag,
@@ -66,8 +62,9 @@
       <ul class="supporting-menu__copyright inline-list {{ section.settings.text_font_size }}">
         <li>
           <a href="{{ shop.secure_url }}"
-            >&copy; {{ shop.name }}
-            {{ 'now' | date: '%Y' -}}
+            >powered by shopify &copy;
+            {{ 'now' | date: '%Y' -}} 
+            (Agvana Jewelry | All Rights Reserved.)
           </a>
         </li>
         {% for link in linklists[section.settings.linklist].links %}
@@ -100,7 +97,7 @@
     {%- if section.settings.footer_payment_enable -%}
       {%- unless shop.enabled_payment_types == empty -%}
         <div class="supporting-menu__item supporting-menu__item--payment">
-          <ul class="supporting-menu__payment payment-icons{% if section.settings.enable_greyscale %} payment-icons--greyscale{% endif %} inline-list">
+          <ul class="supporting-menu__payment payment-icons inline-list">
             {%- for type in shop.enabled_payment_types -%}
               <li>{{ type | payment_type_svg_tag: class: 'payment-icon' }}</li>
             {%- endfor -%}
@@ -147,12 +144,6 @@
       "default": true
     },
     {
-      "type": "checkbox",
-      "id": "enable_greyscale",
-      "label": "Enable greyscale for payment icons",
-      "default": false
-    },
-    {
       "type": "header",
       "content": "Language selector",
       "info": "To add a language, go to your [language settings.](/admin/settings/languages)"
@@ -162,12 +153,6 @@
       "id": "show_locale_selector",
       "label": "Show language selector",
       "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "show_locale_code",
-      "label": "Show language code only",
-      "default": false
     },
     {
       "type": "checkbox",
@@ -235,8 +220,7 @@
   ],
   "presets": [
     {
-      "name": "Supporting menu",
-      "category": "Layout"
+      "name": "Supporting menu"
     }
   ],
   "enabled_on": {
