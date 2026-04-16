@@ -208,10 +208,35 @@
         "padding_top": 15,
         "padding_bottom": 15
       }
+    },
+    "mobile_menu_EyK9bD": {
+      "type": "mobile-menu",
+      "blocks": {
+        "menu_XJwMeM": {
+          "type": "menu",
+          "settings": {
+            "mobile_menu_linklist": "",
+            "text_font_size": "body-large",
+            "highlight_item": "Sale",
+            "highlight_item_color": "#D02E2E",
+            "padding": true,
+            "padding_bottom": 14
+          }
+        }
+      },
+      "block_order": [
+        "menu_XJwMeM"
+      ],
+      "name": "Mobile menu",
+      "settings": {
+        "logo_max_limit": 120,
+        "color_scheme": ""
+      }
     }
   },
   "order": [
     "announcement",
-    "header"
+    "header",
+    "mobile_menu_EyK9bD"
   ]
 }
