@@ -18,14 +18,16 @@
           "settings": {
             "title": "Slogan",
             "heading_font_size": "heading-x-large",
-            "heading_tag": "automatic"
+            "heading_tag": "automatic",
+            "padding_bottom": 8
           }
         },
         "text_9B7eqN": {
           "type": "text",
           "settings": {
             "text": "<p><strong>Jewelry That Resonates with You</strong></p>",
-            "text_font_size": "body-large"
+            "text_font_size": "body-large",
+            "padding_bottom": 8
           }
         },
         "button_V4dGDk": {
@@ -37,7 +39,9 @@
             "button_type": "btn--primary",
             "button_size": "",
             "button_style": "btn--solid",
-            "show_arrow": false
+            "show_arrow": false,
+            "full_width": false,
+            "padding_bottom": 8
           }
         }
       },
@@ -57,6 +61,7 @@
         "flex_align_mobile": "align--middle-center-mobile",
         "color_scheme": "",
         "show_text_background": false,
+        "overlay_type": "disabled",
         "padding_top": 0,
         "padding_bottom": 0,
         "show_placeholder": true
@@ -507,6 +512,7 @@
           "type": "image",
           "settings": {
             "image": "shopify://shop_images/6.jpg",
+            "image_width": 66,
             "image_shape": "normal",
             "title": "Our Mission",
             "heading_font_size": "heading-small",
@@ -526,6 +532,7 @@
         "template--16080811917472__de8509c4-ff4c-4a3b-a84c-f3d9b797dd39-image-2": {
           "type": "image",
           "settings": {
+            "image_width": 66,
             "image_shape": "normal",
             "title": "Join Our Affiliate Program",
             "heading_font_size": "heading-small",
@@ -545,6 +552,7 @@
         "template--16080811917472__de8509c4-ff4c-4a3b-a84c-f3d9b797dd39-image-3": {
           "type": "image",
           "settings": {
+            "image_width": 66,
             "image_shape": "normal",
             "title": "Join Our Influencer Program",
             "heading_font_size": "heading-small",
@@ -733,6 +741,63 @@
         "padding_top": 50,
         "padding_bottom": 50
       }
+    },
+    "section_rich_text_nX4TW4": {
+      "type": "section-rich-text",
+      "blocks": {
+        "subheading_jTBHLJ": {
+          "type": "subheading",
+          "disabled": true,
+          "settings": {
+            "subheading": "Introducing",
+            "padding_bottom": 16
+          }
+        },
+        "heading_Rxg7BL": {
+          "type": "heading",
+          "settings": {
+            "title": "CLAIM",
+            "heading_font_size": "heading-large",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_YpkUe8": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We are a registered Precious Metals Trader with the Hong Kong Customs. Our registration number is A-B-26-04-10649. The registration certificate may be verified on the official website of Hong Kong Customs. Verification link: https://www.customs.gov.hk/</p>",
+            "text_font_size": "body-medium",
+            "padding_bottom": 16
+          }
+        },
+        "buttons_4RhP6y": {
+          "type": "buttons",
+          "settings": {
+            "button_text": "Learn more",
+            "button_url": "https://www.customs.gov.hk/",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "subheading_jTBHLJ",
+        "heading_Rxg7BL",
+        "text_YpkUe8",
+        "buttons_4RhP6y"
+      ],
+      "name": "Rich text",
+      "settings": {
+        "align_text": "text-center",
+        "width": "wrapper",
+        "color_scheme": "",
+        "overlay_type": "disabled",
+        "padding_top": 50,
+        "padding_bottom": 0
+      }
     }
   },
   "order": [
@@ -749,6 +814,7 @@
     "de8509c4-ff4c-4a3b-a84c-f3d9b797dd39",
     "section_collections_list_GcUpLy",
     "contact_form_iJaBQG",
+    "section_rich_text_nX4TW4",
     "section_divider_jUHYmF"
   ]
 }
