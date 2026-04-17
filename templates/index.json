@@ -39,6 +39,7 @@
         "template--16068195385504__578b026e-fe20-4995-8a78-d0fd8ce30467-1689145514e5b3649e-0",
         "template--16068195385504__578b026e-fe20-4995-8a78-d0fd8ce30467-1689145514e5b3649e-2"
       ],
+      "disabled": true,
       "custom_css": [],
       "settings": {
         "image_1": "shopify://shop_images/2024-11-17_16-02-07_B_Radius8_Smoothing4_0e6110ff-2a2e-4bd1-b7e9-79082a905d09.jpg",
@@ -58,6 +59,71 @@
         "show_placeholder": true
       }
     },
+    "section_custom_content_ktDL7b": {
+      "type": "section-custom-content",
+      "blocks": {
+        "image_kX9tQL": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/banner2.jpg",
+            "title": "Mother's Day Sale",
+            "heading_font_size": "heading-medium",
+            "text": "",
+            "text_font_size": "body-medium",
+            "flex_align": "align--bottom-center",
+            "show_text_background": false,
+            "bg_color": "",
+            "color": "#102663",
+            "overlay_type": "disabled",
+            "link_text": "SHOP NOW",
+            "link": "shopify://collections/gifts-for-mother-s-day",
+            "button_type": "btn--secondary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "heading_tag": "automatic"
+          }
+        },
+        "image_WdcDHa": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/banner1_b74663ac-652e-47ea-81c9-756c9a72406e.jpg",
+            "title": "The Eternity Suite",
+            "heading_font_size": "heading-medium",
+            "text": "",
+            "text_font_size": "body-medium",
+            "flex_align": "align--bottom-center",
+            "show_text_background": false,
+            "bg_color": "",
+            "color": "#102663",
+            "overlay_type": "disabled",
+            "link_text": "FIND YOUR FOREVER",
+            "link": "shopify://collections/wedding-rings-bands",
+            "button_type": "btn--secondary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "heading_tag": "automatic"
+          }
+        }
+      },
+      "block_order": [
+        "image_kX9tQL",
+        "image_WdcDHa"
+      ],
+      "name": "Custom section",
+      "settings": {
+        "borders": false,
+        "gutters": false,
+        "width": "wrapper--full",
+        "height": "screen-height-three-quarters",
+        "mobile_height": "screen-height-one-third--mobile",
+        "reverse_blocks": false,
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
     "section_divider_hwty7r": {
       "type": "section-divider",
       "disabled": true,
@@ -69,15 +135,53 @@
         "padding_bottom": 50
       }
     },
-    "section_divider_j77j3n": {
-      "type": "section-divider",
-      "disabled": true,
+    "section_rich_text_NRWata": {
+      "type": "section-rich-text",
+      "blocks": {
+        "heading_b6rqBB": {
+          "type": "heading",
+          "settings": {
+            "title": "Shop Jewelry by Category",
+            "heading_font_size": "heading-medium",
+            "padding_bottom": 16,
+            "heading_tag": "automatic"
+          }
+        },
+        "text_m78Q4p": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Crafted with meaning. Worn with love. </p>",
+            "text_font_size": "body-small",
+            "padding_bottom": 16
+          }
+        },
+        "buttons_AVULzx": {
+          "type": "buttons",
+          "disabled": true,
+          "settings": {
+            "button_text": "Learn more",
+            "button_url": "",
+            "button_type": "btn--primary",
+            "button_size": "",
+            "button_style": "btn--solid",
+            "show_arrow": false,
+            "padding_bottom": 16
+          }
+        }
+      },
+      "block_order": [
+        "heading_b6rqBB",
+        "text_m78Q4p",
+        "buttons_AVULzx"
+      ],
+      "name": "Rich text",
       "settings": {
-        "show_line": true,
-        "width": "wrapper--full",
+        "align_text": "text-center",
+        "width": "wrapper--full-padded",
         "color_scheme": "",
-        "padding_top": 31,
-        "padding_bottom": 28
+        "overlay_type": "disabled",
+        "padding_top": 100,
+        "padding_bottom": 0
       }
     },
     "0c650933-1401-4b75-942d-30ebc9278656": {
@@ -87,7 +191,7 @@
           "type": "collection",
           "settings": {
             "collection": "lab-grown-diamond-engagement-rings",
-            "collection_image": "shopify://shop_images/categories_2.webp",
+            "collection_image": "shopify://shop_images/1-1_3_aa6a0842-3dc3-479b-a13f-c63db1bb3e6d.webp",
             "title": "Engagement Rings"
           }
         },
@@ -95,7 +199,7 @@
           "type": "collection",
           "settings": {
             "collection": "necklaces",
-            "collection_image": "shopify://shop_images/categories_3.webp",
+            "collection_image": "shopify://shop_images/3_279b62df-f570-4372-814a-1a976e3a623b.webp",
             "title": ""
           }
         },
@@ -103,7 +207,7 @@
           "type": "collection",
           "settings": {
             "collection": "wedding-rings-bands",
-            "collection_image": "shopify://shop_images/categories_1.webp",
+            "collection_image": "shopify://shop_images/2024-10-2317-52-14_B_Radius8_Smoothing4_8a8a422a-ccca-47de-baaf-876a8bc7772f.webp",
             "title": "Wedding Rings"
           }
         },
@@ -111,7 +215,7 @@
           "type": "collection",
           "settings": {
             "collection": "gift",
-            "collection_image": "shopify://shop_images/PI9A5201.png",
+            "collection_image": "shopify://shop_images/pear_blue_box_webp.webp",
             "title": ""
           }
         }
@@ -126,9 +230,9 @@
         "h2 {font-size: 30px;}"
       ],
       "settings": {
-        "title": "Shop Jewelry by Category",
+        "title": "",
         "heading_font_size": "heading-mini",
-        "description": "<p>Crafted with meaning. Worn with love. </p>",
+        "description": "",
         "text_font_size": "body-small",
         "button_text": "",
         "button_url": "shopify://collections",
@@ -142,7 +246,7 @@
         "grid": 4,
         "layout_mobile": "2",
         "color_scheme": "",
-        "padding_top": 50,
+        "padding_top": 10,
         "padding_bottom": 25,
         "heading_tag": "automatic"
       }
@@ -306,17 +410,6 @@
         "padding_top": 0,
         "padding_bottom": 50,
         "show_placeholder": true
-      }
-    },
-    "section_divider_BHzckY": {
-      "type": "section-divider",
-      "disabled": true,
-      "settings": {
-        "show_line": true,
-        "width": "wrapper--full",
-        "color_scheme": "",
-        "padding_top": 50,
-        "padding_bottom": 50
       }
     },
     "section_double_9bJVdP": {
@@ -1152,14 +1245,14 @@
   },
   "order": [
     "578b026e-fe20-4995-8a78-d0fd8ce30467",
+    "section_custom_content_ktDL7b",
     "section_divider_hwty7r",
-    "section_divider_j77j3n",
+    "section_rich_text_NRWata",
     "0c650933-1401-4b75-942d-30ebc9278656",
     "section_divider_yaqnKh",
     "section_double_slider_RLbxUJ",
     "section_product_f8L3t9",
     "section_hero_DFaCKU",
-    "section_divider_BHzckY",
     "section_double_9bJVdP",
     "section_double_Xxx3Re",
     "section_collection_x39jmW",

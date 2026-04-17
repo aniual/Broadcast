@@ -17,9 +17,9 @@
         "text_PwfBX8": {
           "type": "text",
           "settings": {
-            "text": "<p>15% Off for Sitewide with WELCOME15 and Free Shipping. Shop Now!</p>",
+            "text": "<p><strong>Mother’s Day Sale</strong>: 20% Off Sitewide with Code <strong>MOM20</strong>. Shop Now!</p>",
             "target_url_enabled": false,
-            "target_url": "",
+            "target_url": "shopify://collections/gifts-for-mother-s-day",
             "target_referrer_enabled": false,
             "target_referrer": "",
             "target_device_enabled": false,
@@ -51,7 +51,7 @@
         "6fbe7996-9e29-44e9-aa06-80ef8cd41fa9": {
           "type": "image",
           "settings": {
-            "position": "2",
+            "position": "3",
             "image": "shopify://shop_images/lQDPJxtgaf5dcMnNA7jNBaewVzCHq0KywSoJjwaH9f4fAQ_1447_952.jpg",
             "aspect_ratio": 0.5,
             "wide_image": true,
@@ -67,7 +67,7 @@
         "image_4Yqakb": {
           "type": "image",
           "settings": {
-            "position": "3",
+            "position": "4",
             "image": "shopify://shop_images/lQDPJxdRxXL1FzfNBUbNBDiwA_HFdoj1VG8H_BQ9iEqjAA_1080_1350.jpg",
             "aspect_ratio": 0.5,
             "wide_image": true,
@@ -83,7 +83,7 @@
         "image_3HyBh7": {
           "type": "image",
           "settings": {
-            "position": "4",
+            "position": "5",
             "image": "shopify://shop_images/TOP_MENU_WEBP.webp",
             "aspect_ratio": 0.5,
             "wide_image": true,
@@ -99,7 +99,7 @@
         "image_kPDje3": {
           "type": "image",
           "settings": {
-            "position": "5",
+            "position": "6",
             "image": "shopify://shop_images/infinite_ring_a1ed2767-01d6-4aec-989b-b7fbf44d5f3d.jpg",
             "aspect_ratio": 0.5,
             "wide_image": true,
@@ -116,7 +116,7 @@
           "type": "image",
           "disabled": true,
           "settings": {
-            "position": "5",
+            "position": "6",
             "image": "shopify://shop_images/TOP_MENU_NECKLACE_WEBP.webp",
             "aspect_ratio": 0.5,
             "wide_image": true,
@@ -132,7 +132,7 @@
         "image_dgjHQ9": {
           "type": "image",
           "settings": {
-            "position": "6",
+            "position": "7",
             "image": "shopify://shop_images/FEATURED_webp.webp",
             "aspect_ratio": 0.5,
             "wide_image": true,
@@ -148,7 +148,7 @@
         "image_jfkEM3": {
           "type": "image",
           "settings": {
-            "position": "7",
+            "position": "8",
             "image": "shopify://shop_images/about_agvana_showroom_webp_7c8116d2-6963-4291-8b66-6abcef6eb1ee.webp",
             "aspect_ratio": 0.5,
             "wide_image": true,
@@ -208,10 +208,35 @@
         "padding_top": 15,
         "padding_bottom": 15
       }
+    },
+    "mobile_menu_EyK9bD": {
+      "type": "mobile-menu",
+      "blocks": {
+        "menu_XJwMeM": {
+          "type": "menu",
+          "settings": {
+            "mobile_menu_linklist": "",
+            "text_font_size": "body-large",
+            "highlight_item": "Sale",
+            "highlight_item_color": "#D02E2E",
+            "padding": true,
+            "padding_bottom": 14
+          }
+        }
+      },
+      "block_order": [
+        "menu_XJwMeM"
+      ],
+      "name": "Mobile menu",
+      "settings": {
+        "logo_max_limit": 120,
+        "color_scheme": ""
+      }
     }
   },
   "order": [
     "announcement",
-    "header"
+    "header",
+    "mobile_menu_EyK9bD"
   ]
 }
