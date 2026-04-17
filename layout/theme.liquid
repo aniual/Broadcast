@@ -5,7 +5,7 @@
 
     {{ content_for_header }}
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XDZGQ7BPFK"></script>
+    {% comment %} <script async src="https://www.googletagmanager.com/gtag/js?id=G-XDZGQ7BPFK"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
@@ -14,7 +14,7 @@
       gtag('js', new Date());
 
       gtag('config', 'G-XDZGQ7BPFK');
-    </script>
+    </script> {% endcomment %}
   </head>
 
   <body
