@@ -247,7 +247,7 @@
         "layout_mobile": "2",
         "color_scheme": "",
         "padding_top": 10,
-        "padding_bottom": 25,
+        "padding_bottom": 50,
         "heading_tag": "automatic"
       }
     },
@@ -331,7 +331,7 @@
         "layout": "",
         "width": "wrapper--full-padded",
         "height": "screen-height-two-thirds",
-        "mobile_height": "screen-height-two-thirds--mobile",
+        "mobile_height": "screen-height-one-half--mobile",
         "reverse_blocks": false,
         "color_scheme": "",
         "padding_top": 0,
@@ -515,7 +515,7 @@
         "reverse_blocks": false,
         "color_scheme": "",
         "padding_top": 0,
-        "padding_bottom": 0,
+        "padding_bottom": 50,
         "show_placeholder": true
       }
     },
@@ -610,7 +610,7 @@
         "color_scheme": "scheme-10",
         "show_text_background": false,
         "overlay_type": "disabled",
-        "padding_top": 50,
+        "padding_top": 0,
         "padding_bottom": 50,
         "show_placeholder": true
       }
@@ -979,7 +979,7 @@
         "width": "wrapper",
         "color_scheme": "scheme-1",
         "overlay_type": "disabled",
-        "padding_top": 20,
+        "padding_top": 50,
         "padding_bottom": 0
       }
     },
@@ -1229,7 +1229,7 @@
         "layout_mobile": "slider",
         "color_scheme": "",
         "padding_top": 0,
-        "padding_bottom": 0,
+        "padding_bottom": 50,
         "heading_tag": "automatic"
       }
     },
@@ -1240,7 +1240,7 @@
         "width": "wrapper--full",
         "color_scheme": "",
         "padding_top": 30,
-        "padding_bottom": 30
+        "padding_bottom": 50
       }
     }
   },
