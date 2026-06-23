@@ -132,7 +132,7 @@
           "settings": {
             "image": "shopify://shop_images/IMG_2943.jpg",
             "heading": "Rings",
-            "url": "shopify://collections/rings",
+            "url": "shopify://collections/ring-gifts",
             "color": "#ffffff",
             "bg_color": "#fafafa",
             "border_color": ""
@@ -417,7 +417,7 @@
       ],
       "name": "Featured collection",
       "settings": {
-        "featured_collection": "rings",
+        "featured_collection": "ring-gifts",
         "heading": "",
         "heading_font_size": "heading-medium",
         "description": "",
